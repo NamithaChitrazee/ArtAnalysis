@@ -29,7 +29,7 @@
 #include "Offline/MCDataProducts/inc/MCRelationship.hh"
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
 #include "Offline/DataProducts/inc/PDGCode.hh"
-#include "Offline/TrkDiag/inc/BkgHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/BkgHitInfo.hh"
 // art
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/types/Atom.h"

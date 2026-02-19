@@ -33,9 +33,9 @@
 #include "Offline/MCDataProducts/inc/MCRelationship.hh"
 #include "Offline/MCDataProducts/inc/PrimaryParticle.hh"
 // Utilities
-#include "Offline/TrkDiag/inc/TrkMCTools.hh"
+#include "ArtAnalysis/TrkDiag/inc/TrkMCTools.hh"
 // diagnostics
-#include "Offline/TrkDiag/inc/ComboHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/ComboHitInfo.hh"
 #include <map>
 #include <limits>
 

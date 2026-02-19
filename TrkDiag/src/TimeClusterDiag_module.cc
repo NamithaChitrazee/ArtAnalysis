@@ -20,8 +20,8 @@
 #include "Offline/TrkReco/inc/TrkTimeCalculator.hh"
 #include "Offline/TrkReco/inc/TrkUtilities.hh"
 // TrkDiag
-#include "Offline/TrkDiag/inc/TimeClusterInfo.hh"
-#include "Offline/TrkDiag/inc/TrkMCTools.hh"
+#include "ArtAnalysis/TrkDiag/inc/TimeClusterInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/TrkMCTools.hh"
 // data
 #include "Offline/RecoDataProducts/inc/ComboHit.hh"
 #include "Offline/RecoDataProducts/inc/StrawHitFlag.hh"

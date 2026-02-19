@@ -20,7 +20,7 @@
 // data
 #include "Offline/RecoDataProducts/inc/KalSeed.hh"
 #include "Offline/RecoDataProducts/inc/MVAResult.hh"
-#include "Offline/TrkDiag/inc/TrackPID.hxx"
+#include "ArtAnalysis/TrkDiag/inc/TrackPID.hxx"
 #include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "Offline/CalorimeterGeom/inc/DiskCalorimeter.hh"
 // C++

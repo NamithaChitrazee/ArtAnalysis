@@ -32,7 +32,7 @@
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
 #include "Offline/MCDataProducts/inc/EventWeight.hh"
 
-#include "Offline/TrkDiag/inc/WeightModule.hh"
+#include "ArtAnalysis/TrkDiag/inc/WeightModule.hh"
 #include "Offline/Mu2eUtilities/inc/RMCPhys.hh"
 namespace mu2e {
   typedef WeightModule<RMCPhys> RMCWeight;

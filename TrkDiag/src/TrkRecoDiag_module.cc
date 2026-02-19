@@ -20,7 +20,7 @@
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
 #include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 // diagnostics
-#include "Offline/TrkDiag/inc/TrkMCTools.hh"
+#include "ArtAnalysis/TrkDiag/inc/TrkMCTools.hh"
 #include "Offline/TrkReco/inc/TrkUtilities.hh"
 // data
 #include "Offline/RecoDataProducts/inc/TimeCluster.hh"

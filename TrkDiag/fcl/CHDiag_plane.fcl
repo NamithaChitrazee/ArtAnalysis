@@ -1,4 +1,4 @@
-#include "Offline/TrkDiag/fcl/CHD.fcl"
+#include "ArtAnalysis/TrkDiag/fcl/CHD.fcl"
 #include "Offline/TrkHitReco/fcl/epilog_plane.fcl"
 #include "Offline/TrkHitReco/fcl/epilog_FBH_plane.fcl"
 physics.producers.makePH.TestFlag : true

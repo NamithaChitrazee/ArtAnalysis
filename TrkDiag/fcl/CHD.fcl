@@ -5,7 +5,7 @@
 #include "Offline/fcl/minimalMessageService.fcl"
 #include "Offline/fcl/standardServices.fcl"
 #include "Offline/TrkHitReco/fcl/prolog.fcl"
-#include "Offline/TrkDiag/fcl/prolog.fcl"
+#include "ArtAnalysis/TrkDiag/fcl/prolog.fcl"
 
 process_name : ComboHitDiag
 source : { module_type : RootInput }

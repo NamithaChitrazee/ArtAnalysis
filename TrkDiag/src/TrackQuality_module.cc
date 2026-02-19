@@ -21,7 +21,7 @@
 // data
 #include "Offline/RecoDataProducts/inc/KalSeed.hh"
 #include "Offline/RecoDataProducts/inc/MVAResult.hh"
-#include "Offline/TrkDiag/inc/TrkQual_ANN1.hxx"
+#include "ArtAnalysis/TrkDiag/inc/TrkQual_ANN1.hxx"
 // C++
 #include <iostream>
 #include <fstream>
