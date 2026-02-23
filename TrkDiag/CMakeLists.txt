@@ -162,21 +162,6 @@ cet_build_plugin(TrkGeomTest art::module
       Offline::TrackerGeom
 )
 
-cet_build_plugin(TrkRecoDiag art::module
-    REG_SOURCE src/TrkRecoDiag_module.cc
-    LIBRARIES REG
-      Offline::TrkDiag
-
-      Offline::BFieldGeom
-      Offline::GeneralUtilities
-      Offline::GeometryService
-      Offline::GlobalConstantsService
-      Offline::MCDataProducts
-      Offline::Mu2eUtilities
-      Offline::RecoDataProducts
-      Offline::TrkReco
-)
-
 art_dictionary( NO_CHECK_CLASS_VERSION # For some reason this segfaults
     CLASSES_DEF_XML ${CMAKE_CURRENT_SOURCE_DIR}/src/classes_def.xml
     CLASSES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/classes.h

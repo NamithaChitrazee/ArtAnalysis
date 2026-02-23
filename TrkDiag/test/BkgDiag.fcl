@@ -7,7 +7,7 @@
 # services.DbService.version: v1_0
 #include "Offline/fcl/minimalMessageService.fcl"
 #include "Offline/fcl/standardServices.fcl"
-#include "Offline/TrkDiag/fcl/prolog.fcl"
+#include "ArtAnalysis/TrkDiag/fcl/prolog.fcl"
 #include "Offline/TrkHitReco/fcl/prolog.fcl"
 process_name: BkgDiag
 source : { module_type : RootInput }

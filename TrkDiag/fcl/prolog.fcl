@@ -16,12 +16,6 @@ BD : {
   ExpectedCHLevel : "uniquepanel"
 }
 
-TRD : {
-  module_type : TrkRecoDiag
-  StrawDigiMCCollection : "compressDigiMCs"
-  VDStepPointMCCollection : "compressDigiMCs:virtualdetector"
-}
-
 SHD : {
   module_type : StrawHitDiag
   StrawDigiMCCollection : "compressDigiMCs"

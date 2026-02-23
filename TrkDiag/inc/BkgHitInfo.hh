@@ -1,6 +1,6 @@
 #ifndef TrkDiag_BkgHitInfo_HH
 #define TrkDiag_BkgHitInfo_HH
-#include "Offline/TrkDiag/inc/StrawHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/StrawHitInfo.hh"
 namespace mu2e {
   // extend StrawHitInfo struct with additional info on background hits
   struct BkgHitInfo : public StrawHitInfo {
