@@ -74,7 +74,6 @@ TrkDiag : {
     CHD : @local::CHD
     SHD : @local::SHD
     HD : @local::HD
-    TRD : @local::TRD
     BD : @local::BD
   }
 }
