@@ -1,0 +1,10 @@
+#include "ArtAnalysis/TrkDiag/inc/StrawHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/TrkCaloInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/TrkHitShare.hh"
+#include "ArtAnalysis/TrkDiag/inc/TimeClusterInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/HitInfoMC.hh"
+#include "ArtAnalysis/TrkDiag/inc/HelixHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/BkgHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/ComboHitInfo.hh"
+#include <map>
+#include <vector>
