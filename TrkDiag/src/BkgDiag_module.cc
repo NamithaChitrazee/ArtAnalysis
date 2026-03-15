@@ -303,7 +303,6 @@ namespace mu2e
     if(_hdiag)_bhdiag->Fill();
 
     _cluIdx=0;
-    //std::cout<<"bkgccol size = "<<_bkgccol->size()<<std::endl;
     for (size_t ibkg=0;ibkg<_bkgccol->size();++ibkg){
       BkgCluster const& cluster = _bkgccol->at(ibkg);
       // fill cluster info
@@ -366,27 +365,15 @@ namespace mu2e
            or _code == 21 or _code == 115 or _code == 97 or _code == 101 or _code == 78
            or _code == 113 or _code == 16 or _code == 23 or _code == 35 or _code == 72
            or _code == 56  or _code == 2 or _code == 31 or _code == 59  or _code == 109)
-          _prel = -2; // This is for a cluster, so not an ACCURATE check
-        else if(_code == 167){
+          _prel = -2; 
+        else if(_code == 167)
           _prel = 1;
-          //std::cout<<"CE cluster"<<" mom = "<<_mmom.R()<<" PDG = "<<_mpdg<<std::endl;
-        }
-        else{
+        else
           _prel = 0;
-          std::cout<<"Cluster hits size = "<<cluster.hits().size()<<" Background prel = "
-                   <<_prel<<" isbkg = "<<_isbkg<<" code = "<<_code<<" pdg = "<<_mpdg<<std::endl;
-        }
-        /*if(_prel == -2) std::cout<<"No. of true background clusters = "<<_prel<<std::endl;
-        if(_prel == 0) std::cout<<"No. of true signal clusters = "<<_prel<<std::endl;
-        if(_prel == -2 and _isbkg) std::cout<<"Background classified correctly = "<<_prel<<" "<<_isbkg<<std::endl;
-        if(_prel == 0 and !_isbkg) std::cout<<"Signal classified correctly = "<<_prel<<" "<<_isbkg<<std::endl;
-        if(_prel == 0 and _isbkg) std::cout<<"Signal classified INCORRECTLY = "<<_prel<<" "<<_isbkg<<std::endl;*/
-        //if(_prel == 0) std::cout<<"Analyze:: After find majority = "<<_code<<" frac = "<<_frac<<" pdg = "<<_mpdg<<" mom = "<<_mmom<<" prel = "<<_prel<<std::endl;
         /*if(mptr.isNonnull()){
           _mpdg = mptr->pdgId();
           _mproc = mptr->creationCode();
           _mopos = mptr->startPosXYZ();
-          std::cout<<"Analyze:: mpdg = "<<_mpdg<<" creation code = "<<_mproc<<std::endl;
           for(auto const& mcmptr : _mcprimary->primarySimParticles()){
             MCRelationship rel(mcmptr,mptr);
             if(rel.relationship() > MCRelationship::none){
@@ -394,7 +381,6 @@ namespace mu2e
                 _prel = std::min(_prel,(int)rel.relationship());
               else
                 _prel = rel.relationship();
-              std::cout<<"prel = "<<_prel<<" mPDG ID = "<<_mpdg<<" creation code = "<<_mproc<<std::endl;
             }
           }
         }*/
@@ -403,9 +389,6 @@ namespace mu2e
       _bkghinfo.clear();
       _bkghinfo.reserve(cluster.hits().size());
       _nch = cluster.hits().size();
-      /*if(_nch > 0) {
-        std::cout<<"Cluster size = "<<_nch<<" code = "<<_code<<" pdg = "<<_mpdg<<std::endl;
-        }*/
       _nsh = _nsth = _nactive = _nsha = _nbkg = _nrel = 0;
       //int misCE(0);
       float sumEdep(0.);
@@ -495,8 +478,6 @@ namespace mu2e
         }
         _nsh += ch.nStrawHits();
         StrawHitFlag const& shf = bhit.flag();
-        //std::cout<<"BkgDiag strawhit flag = "<<shf<<std::endl;
-        //std::cout<<"BkgDiag ch flag = "<<ch.flag()<<std::endl;
         if(shf.hasAllProperties(StrawHitFlag::active)){
           _nactive += ch.nStrawHits();
           if(StrawIdMask::station == ch._mask) _nsha+= ch.nStrawHits();
@@ -509,29 +490,17 @@ namespace mu2e
         if(_mcdiag){
           std::vector<StrawDigiIndex> dids;
           _chcol->fillStrawDigiIndices(ich,dids);
-          StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);// taking 1st digi: is there a better idea??
+          StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
           fillStrawHitInfoMC(mcdigi,mptr,bkghinfo);
-          //global counting for the cluster: count signal hits only, but background from background is OK
           if(bkghinfo._mrel==MCRelationship::same){
             _nmain += ch.nStrawHits(); // same as main particle
           } else if(bkghinfo._mrel>MCRelationship::sibling)
             _nsibling += ch.nStrawHits();
           if(bkghinfo._mrel>MCRelationship::none)_nrel += ch.nStrawHits();
           if(bkghinfo._mcpdg == PDGCode::proton)_nprot += ch.nStrawHits();
-          /*if(bkghinfo._prel == -2 and _prel == -2) _truebkghits += ch.nStrawHits();
-          if((bkghinfo._prel == 0 or bkghinfo._prel == 1) and _prel == 0) _truesighits += ch.nStrawHits();
-          if(bkghinfo._prel == -2) _totalbkghits += ch.nStrawHits();
-          if(bkghinfo._prel == 0 or bkghinfo._prel == 1) _totalsighits +=ch.nStrawHits();
-          if(bkghinfo._prel == 1 and _prel == 1) _trueCEhits +=ch.nStrawHits();
-          if(bkghinfo._prel == 1) _totalCEhits +=ch.nStrawHits();
-          if(bkghinfo._prel == 1 and _prel == -2) {
-            _misCEhits +=ch.nStrawHits();
-            misCE +=ch.nStrawHits();
-          }*/
         }
         bkghinfo._active = shf.hasAllProperties(StrawHitFlag::active);
         bkghinfo._cbkg = shf.hasAllProperties(StrawHitFlag::bkg);
-        //std::cout<<"Bkg hit info = "<<bkghinfo._cbkg<<" hit prel = "<<bkghinfo._prel<<" prel = "<<_prel<<" nbkg = "<<_nbkg<<std::endl;
         bkghinfo._gdist = bhit.distance();
         bkghinfo._index = ich;
         // calculate separation to cluster
@@ -572,17 +541,10 @@ namespace mu2e
       }
       _zgap2 = _zgap2/hz.size();
       _deltaPhi = _deltaPhi/hz.size();
-      //std::cout<<"Delta phi = "<<_deltaPhi<<std::endl;
       _zmin = hz.front();
       _zmax = hz.back();
-      //if(_zgap == 0 or _zgap2 == 0 or _zdiff == 0) std::cout<<_zgap<<" "<<_zgap2<<" "<<_zdiff<<std::endl;
       if(_nch > 2) _zdiff = _zmax - _zmin;
-      if(_nch > 2) _phidiff = phimax - phimin; //hphi.back() - hphi.front();
-      //std::cout<<"zdiff = "<<_zdiff<<" phidiff = "<<_phidiff<<std::endl;
-      /*if(misCE > 0) std::cout<<"Mis CE = "<<misCE<<" Cluster rho = "<<_crho<<" zdiff = "<<_zdiff<<" phidiff = "
-               <<_phidiff<<" nhits = "<<_nsh<<" RMS rho = "<<_rmscrho<<" RMS time = "
-               <<_rmsctime<<" RMS phi = "<<_rmscphi<<" keras Q = "<<_kQ
-               <<" pos = "<<_cpos.X()<<" "<<_cpos.Y()<<" "<<_cpos.Z()<<" event = "<<_iev<<" code = "<<_code<<std::endl;*/
+      if(_nch > 2) _phidiff = phimax - phimin; 
       _lp = -1; // last plane in cluster
       _fp = StrawId::_nplanes; // first plane in cluster
       _np = 0;//# of planes
@@ -601,9 +563,6 @@ namespace mu2e
       _bcdiag->Fill();
       ++_cluIdx;
     }
-    //std::cout<<"Truebkghitinfo = "<<_truebkghits<<" sighits = "<<_truesighits<<" CE hits = "
-    //         <<_trueCEhits<<" Total bkg hits = "<<_totalbkghits<<" total sig hits = "<<_totalsighits
-    //         <<" Total CE hits = "<<_totalCEhits<<" mis CE hits = "<<_misCEhits<<std::endl;   
     ++_iev;
   }
 
@@ -637,10 +596,7 @@ namespace mu2e
       art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
       if(spp.isNonnull()){
         int creationCode = spp->creationCode();
-        //if(dids.size() < 2) std::cout<<"cluster has "<<dids.size()<<" creation code = "<<creationCode<<" pdg ID = "<<spp->pdgId()<<std::endl;
         ++codeCount[creationCode];
-        //std::cout<<"findMajority::MCDigi ID = "<<id<<" simParticle = "<<spp->pdgId()<<" creation code = "
-        //         <<spp->creationCode()<<std::endl;
       }
     }
     // Find most common code
@@ -664,7 +620,6 @@ namespace mu2e
         break;
       }
     }
-    //std::cout<<"findMajority::most common code = "<<mostCommonCode<<" fraction = "<<fraction<<" mom = "<<mmom<<" pdg = "<<mptr->pdgId()<<std::endl;
   }
 
   void BkgDiag::findMain(std::vector<uint16_t>const& dids, art::Ptr<SimParticle>& mptr,XYZVectorF& mmom, std::vector<int>& icontrib) const {
@@ -673,11 +628,8 @@ namespace mu2e
     for(auto id : dids) {
       StrawDigiMC const& mcdigi = _mcdigis->at(id);
       art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
-      if(spp.isNonnull()){
+      if(spp.isNonnull())
         pp.insert(spp);
-        //std::cout<<"findMain::MCDigi ID = "<<id<<" simParticle = "<<spp->pdgId()<<" creation code = "
-        //         <<spp->creationCode()<<std::endl;
-      }
     }
     // map these particles back to each other, to compress out particles generated inside the cluster
     std::map<art::Ptr<SimParticle>,art::Ptr<SimParticle> > spmap;
@@ -766,7 +718,6 @@ namespace mu2e
       art::Ptr<SimParticle> const& spp = sgsp->simParticle();
       if(spp == mptr){
         mmom = sgsp->momentum();
-        //std::cout<<"mmom = "<<mmom<<" pdgID = "<<spp->pdgId()<<" creation code = "<<spp->creationCode()<<std::endl;
         break;
       }
     }
@@ -792,8 +743,6 @@ namespace mu2e
       if(spp.isNonnull()){
         MCRelationship rel(spp,mptr);
         int code = spp->creationCode();
-        //int momcreationCode = mptr->creationCode();
-        //std::cout<<"fillStrawHitInfoMC creationCode = "<<code<<" mother = "<<momcreationCode<<std::endl;
         if(code == 12 or code == 17 or code == 40 or code == 165 or code == 13
            or code == 74 or code == 58 or code == 114 or code == 166
            or code == 21 or code == 115 or code == 97 or code == 101 or code == 78
@@ -816,7 +765,6 @@ namespace mu2e
               shinfo._prel = rel.relationship();
           }
           }*/
-        
       }
     }
   }
