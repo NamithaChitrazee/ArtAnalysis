@@ -7,6 +7,7 @@
 #include "Offline/RecoDataProducts/inc/StrawHitFlag.hh"
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
+#include "ArtAnalysis/TrkDiag/inc/BkgMCMatch.hh"
 
 #include "TTree.h"
 
@@ -38,9 +39,12 @@ private:
   int _creationCode;
   int _pdg;
   bool _flaggedBkg;
-  int _totalce, _totalbkg, _totalsig;
-  int _cemis, _bkgtrue, _sigmis;
- 
+  int _totalce = 0;
+  int _totalbkg = 0;
+  int _totalsig = 0;
+  int _cemis = 0;
+  int _bkgtrue = 0;
+  int _sigmis = 0;
 };
 
 ComboHitBkgDiag::ComboHitBkgDiag(const art::EDAnalyzer::Table<Config>& config) :
@@ -51,14 +55,7 @@ ComboHitBkgDiag::ComboHitBkgDiag(const art::EDAnalyzer::Table<Config>& config) :
 
 void ComboHitBkgDiag::beginJob() {
   art::ServiceHandle<art::TFileService> tfs;
-  _totalce = 0;
-  _totalbkg = 0;
-  _totalsig = 0;
-  _bkgtrue = 0;
-  _cemis = 0;
-  _sigmis = 0;
   _tree = tfs->make<TTree>("chbkg", "ComboHit background truth check");
-
   _tree->Branch("iev", &_iev, "iev/I");
   _tree->Branch("creationCode", &_creationCode, "creationCode/I");
   _tree->Branch("pdg", &_pdg, "pdg/I");
@@ -79,32 +76,26 @@ void ComboHitBkgDiag::analyze(const art::Event& event) {
     StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
     auto const& sgsp = mcdigi.earlyStrawGasStep();
     art::Ptr<SimParticle> const& sp = sgsp->simParticle();
-
-    _pdg = sp->pdgId();
-    _creationCode = sp->creationCode();
-    if(_creationCode == 12 or _creationCode == 17 or _creationCode == 40 or _creationCode == 165 or _creationCode == 13
-       or _creationCode == 74 or _creationCode == 58 or _creationCode == 114 or _creationCode == 166
-       or _creationCode == 21 or _creationCode == 115 or _creationCode == 97 or _creationCode == 101 or _creationCode == 78
-       or _creationCode == 113 or _creationCode == 16 or _creationCode == 23 or _creationCode == 35 or _creationCode == 72
-       or _creationCode == 56  or _creationCode == 2 or _creationCode == 31 or _creationCode == 59  or _creationCode == 109)
-        _totalbkg += ch.nStrawHits();
-    else if(_creationCode == 167)
-        _totalce += ch.nStrawHits(); 
-    else
-        _totalsig += ch.nStrawHits();
-    _flaggedBkg = ch.flag().hasAllProperties(StrawHitFlag::bkg);
-    if(_flaggedBkg){
-      if(_creationCode == 12 or _creationCode == 17 or _creationCode == 40 or _creationCode == 165 or _creationCode == 13
-       or _creationCode == 74 or _creationCode == 58 or _creationCode == 114 or _creationCode == 166
-       or _creationCode == 21 or _creationCode == 115 or _creationCode == 97 or _creationCode == 101 or _creationCode == 78
-       or _creationCode == 113 or _creationCode == 16 or _creationCode == 23 or _creationCode == 35 or _creationCode == 72
-         or _creationCode == 56  or _creationCode == 2 or _creationCode == 31 or _creationCode == 59  or _creationCode == 109){
-        _bkgtrue += ch.nStrawHits();
-      }
-      else if(_creationCode == 167)
-        _cemis += ch.nStrawHits(); 
+    if(sp.isNonnull()){
+      _pdg = sp->pdgId();
+      ProcessCode pCode = sp->creationCode();
+      if(BkgMCMatch::isCE(pCode))
+        _totalce += ch.nStrawHits();
+      else if(BkgMCMatch::isBackground(pCode))
+        _totalbkg += ch.nStrawHits(); 
       else
-        _sigmis += ch.nStrawHits();
+        _totalsig += ch.nStrawHits();
+      
+      _flaggedBkg = ch.flag().hasAllProperties(StrawHitFlag::bkg);
+      
+      if(_flaggedBkg){
+        if(BkgMCMatch::isBackground(pCode))
+          _bkgtrue += ch.nStrawHits();
+        else if(BkgMCMatch::isCE(pCode))
+          _cemis += ch.nStrawHits(); 
+        else
+          _sigmis += ch.nStrawHits();
+      }
     }
     _tree->Fill();
   }
@@ -114,8 +105,8 @@ void ComboHitBkgDiag::endJob() {
   std::cout << "====================================\n";
   std::cout << " FINAL COUNTS OVER ALL EVENTS\n";
   std::cout << " Total background hits = " << _totalbkg <<" True background hits = " << _bkgtrue << "\n";
-  std::cout << " Total CE hits = " << _totalce <<" CE mis-tagged hits   = " << _cemis   << "\n";
-  std::cout << " Total Signal hits = "<< _totalsig <<" Signal mis-tagged    = " << _sigmis  << "\n";
+  std::cout << " Total CE hits = " << _totalce <<" CE mis-tagged hits = " << _cemis   << "\n";
+  std::cout << " Total Signal hits = "<< _totalsig <<" Signal mis-tagged hits  = " << _sigmis  << "\n";
   std::cout << "====================================\n";
 }
 

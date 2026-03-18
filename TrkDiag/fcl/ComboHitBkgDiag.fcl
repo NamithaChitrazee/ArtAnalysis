@@ -10,7 +10,6 @@
 #include "ArtAnalysis/TrkDiag/fcl/prolog.fcl"
 #include "Offline/TrkPatRec/fcl/prolog.fcl"
 #include "Offline/CalPatRec/fcl/prolog.fcl"
-#include "Offline/TrkPatRec/fcl/prolog.fcl"
 
 process_name : ComboHitBkgDiag
 source : { module_type : RootInput }

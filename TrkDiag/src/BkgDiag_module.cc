@@ -30,6 +30,7 @@
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
 #include "Offline/DataProducts/inc/PDGCode.hh"
 #include "ArtAnalysis/TrkDiag/inc/BkgHitInfo.hh"
+#include "ArtAnalysis/TrkDiag/inc/BkgMCMatch.hh"
 // art
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/types/Atom.h"
@@ -38,7 +39,6 @@ using std::string;
 using namespace ROOT::Math::VectorUtil;
 namespace mu2e
 {
-
   class BkgDiag : public art::EDAnalyzer {
     public:
 
@@ -128,18 +128,14 @@ namespace mu2e
       float _zmin;
       float _zmax;
       float _zgap;
-      float _deltaPhi;
-    //float _slope;
       float _zdiff;
       float _phidiff;
-      float _zgap2;
       float _pfrac;
       float _kQ;
       int _np, _fp, _lp, _pgap;
 
       // MC truth variables
-      int _mpdg, _mproc, _ncontrib, _icontrib[512];
-    //int _truebkghits, _truesighits, _totalbkghits, _totalsighits, _totalCEhits, _trueCEhits, _misCEhits;
+      int _mpdg, _mproc; // _ncontrib, _icontrib[512];
       int _prel;
       int _code;
       float _frac;
@@ -222,11 +218,8 @@ namespace mu2e
     _bcdiag->Branch("zmin",&_zmin,"zmin/F");
     _bcdiag->Branch("zmax",&_zmax,"zmax/F");
     _bcdiag->Branch("zgap",&_zgap,"zgap/F");
-    _bcdiag->Branch("deltaPhi",&_deltaPhi,"deltaPhi/F");
-    // _bcdiag->Branch("slope",&_slope,"slope/F");
     _bcdiag->Branch("zdiff",&_zdiff,"zdiff/F");
     _bcdiag->Branch("phidiff",&_phidiff,"phidiff/F");
-    _bcdiag->Branch("zgap2",&_zgap2,"zgap2/F");
     _bcdiag->Branch("np",&_np,"np/I");
     _bcdiag->Branch("pfrac",&_pfrac,"pfrac/F");
     _bcdiag->Branch("kQ",&_kQ,"kQ/F");
@@ -252,9 +245,8 @@ namespace mu2e
       _bcdiag->Branch("ngconv",&_ngconv,"ngconv/I");
       _bcdiag->Branch("nebkg",&_nebkg,"nebkg/I");
       _bcdiag->Branch("nprot",&_nprot,"nprot/I");
-      _bcdiag->Branch("ncontrib",&_ncontrib,"ncontrib/I");
-      _bcdiag->Branch("icontrib",&_icontrib,"icontrib[ncontrib]/I");
-      //_bcdiag->Branch("truebkghits",&_truebkghits);
+      //_bcdiag->Branch("ncontrib",&_ncontrib,"ncontrib/I");
+      //_bcdiag->Branch("icontrib",&_icontrib,"icontrib[ncontrib]/I");
     }
     if(_hdiag){
       _bhdiag = tfs->make<TTree>("bkghdiag","background hit diagnostics");
@@ -293,7 +285,7 @@ namespace mu2e
         std::vector<StrawDigiIndex> dids;
         _chcol->fillStrawDigiIndices(ich,dids);
         StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);// taking 1st digi: is there a better idea??
-        art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
+        spp = mcdigi.earlyStrawGasStep()->simParticle();
         _hitPdg[_nhits] = spp->pdgId();
         _hitproc[_nhits] = spp->creationCode();
       }
@@ -342,7 +334,7 @@ namespace mu2e
       _mmom = XYZVectorF();
       _mopos = XYZVectorF();
       _mpdg = _mproc = 0;
-      _ncontrib = 0;
+      //_ncontrib = 0;
       _prel=-1;
       if(_mcdiag){
         // fill vector of indices to all digis used in this cluster's hits
@@ -354,36 +346,15 @@ namespace mu2e
           _chcol->fillStrawDigiIndices(ich,cdids);
         }
         std::vector<int> icontrib;
-        findMain(cdids,mptr,_mmom,icontrib);
+        //findMain(cdids,mptr,_mmom,icontrib);
         findMajority(cdids,mptr,_mmom,_code, _frac);
-        _mpdg = mptr->pdgId();
-        _mproc = mptr->creationCode();
-        _mopos = mptr->startPosXYZ();
-        for (int ic : icontrib) {_icontrib[_ncontrib]=ic; ++_ncontrib;}
-        if(_code == 12 or _code == 17 or _code == 40 or _code == 165 or _code == 13
-           or _code == 74 or _code == 58 or _code == 114 or _code == 166
-           or _code == 21 or _code == 115 or _code == 97 or _code == 101 or _code == 78
-           or _code == 113 or _code == 16 or _code == 23 or _code == 35 or _code == 72
-           or _code == 56  or _code == 2 or _code == 31 or _code == 59  or _code == 109)
-          _prel = -2; 
-        else if(_code == 167)
-          _prel = 1;
-        else
-          _prel = 0;
-        /*if(mptr.isNonnull()){
+        if(mptr.isNonnull()){
           _mpdg = mptr->pdgId();
           _mproc = mptr->creationCode();
           _mopos = mptr->startPosXYZ();
-          for(auto const& mcmptr : _mcprimary->primarySimParticles()){
-            MCRelationship rel(mcmptr,mptr);
-            if(rel.relationship() > MCRelationship::none){
-              if(_prel > MCRelationship::none)
-                _prel = std::min(_prel,(int)rel.relationship());
-              else
-                _prel = rel.relationship();
-            }
-          }
-        }*/
+          //for (int ic : icontrib) {_icontrib[_ncontrib]=ic; ++_ncontrib;}
+          _prel = BkgMCMatch::classify(mptr->creationCode());
+        }
       }
       // fill cluster hit info
       _bkghinfo.clear();
@@ -524,27 +495,22 @@ namespace mu2e
         _clusterdensity = 0.0;
       _cpitch = _nsth > 0 ? sumPitch/sumwPitch : 0.;
       _cyaw = _nsth > 0 ? sumYaw/sumwYaw : 0.;
-      _cqual = std::sqrt(sqrSumQual/_nch);//average SLine fit quality of the cluster
-      _csthqual = float(_nsth)/float(_nch);//SLine ratio the cluster
-      _ccomqual = _cqual + _csthqual;//combined quality metric
+      _cqual = std::sqrt(sqrSumQual/_nch); // average SLine fit quality of the cluster
+      _csthqual = float(_nsth)/float(_nch); // SLine ratio the cluster
+      _ccomqual = _cqual + _csthqual; // combined quality metric
       std::sort(hz.begin(),hz.end());
       _zgap = 0.0;
-      _deltaPhi = 0.0;
-      //_slope = 0.0;
       _zdiff = 0.0;
       _phidiff = 0.0;
-      _zgap2 = 0.0;
       for (unsigned iz=1;iz<hz.size();++iz){
         _zgap = std::max(_zgap,hz[iz]-hz[iz-1]);
-        _deltaPhi = _deltaPhi + (hphi[iz]-hphi[iz-1]); 
-        _zgap2 = _zgap2 + (hz[iz] - hz[iz-1]);
       }
-      _zgap2 = _zgap2/hz.size();
-      _deltaPhi = _deltaPhi/hz.size();
       _zmin = hz.front();
       _zmax = hz.back();
-      if(_nch > 2) _zdiff = _zmax - _zmin;
-      if(_nch > 2) _phidiff = phimax - phimin; 
+      if(_nch > 2) {
+        _zdiff = _zmax - _zmin;
+        _phidiff = phimax - phimin;
+      }
       _lp = -1; // last plane in cluster
       _fp = StrawId::_nplanes; // first plane in cluster
       _np = 0;//# of planes
@@ -612,111 +578,10 @@ namespace mu2e
     for(auto id : dids) {
       StrawDigiMC const& mcdigi = _mcdigis->at(id);
       auto const& sgsp = mcdigi.earlyStrawGasStep();
-      art::Ptr<SimParticle> const& spp = sgsp->simParticle();;
+      art::Ptr<SimParticle> const& spp = sgsp->simParticle();
       if(spp.isNull()) continue;
       mptr = spp;
       if(spp->creationCode() == mostCommonCode) {
-        mmom = sgsp->momentum();
-        break;
-      }
-    }
-  }
-
-  void BkgDiag::findMain(std::vector<uint16_t>const& dids, art::Ptr<SimParticle>& mptr,XYZVectorF& mmom, std::vector<int>& icontrib) const {
-    // find the unique simparticles which produced these hits
-    std::set<art::Ptr<SimParticle> > pp;
-    for(auto id : dids) {
-      StrawDigiMC const& mcdigi = _mcdigis->at(id);
-      art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
-      if(spp.isNonnull())
-        pp.insert(spp);
-    }
-    // map these particles back to each other, to compress out particles generated inside the cluster
-    std::map<art::Ptr<SimParticle>,art::Ptr<SimParticle> > spmap;
-    // look for particles produced at the same point, like conversions.  It's not enough to look for the same parent,
-    // as that parent could produce multiple daughters at different times.  Regardless of mechanism or genealogy, call these 'the same'
-    // as they will contribute equally to the spiral
-    for(std::set<art::Ptr<SimParticle> >::iterator ipp=pp.begin();ipp!=pp.end();++ipp){
-      art::Ptr<SimParticle> sppi = *ipp;
-      spmap[sppi] = sppi;
-    }
-    for(std::set<art::Ptr<SimParticle> >::iterator ipp=pp.begin();ipp!=pp.end();++ipp){
-      art::Ptr<SimParticle> sppi = *ipp;
-      if(sppi->genParticle().isNull()){
-        std::set<art::Ptr<SimParticle> >::iterator jpp=ipp;++jpp;
-        for(;jpp!=pp.end();++jpp){
-          art::Ptr<SimParticle> sppj = *jpp;
-          if(sppj->genParticle().isNull()){
-            // call the particles 'the same' if they are related and were produced near each other
-            MCRelationship rel(sppi,sppj);
-            if(rel==MCRelationship::daughter || rel == MCRelationship::udaughter){
-              spmap[sppi] = sppj;
-              break;
-            } else if(rel == MCRelationship::mother || rel == MCRelationship::umother){
-              spmap[sppj] = sppi;
-            } else if(rel == MCRelationship::sibling || rel == MCRelationship::usibling){
-              double dist = (sppj->startPosition() - sppi->startPosition()).mag();
-              if(dist < 10.0){
-                if(sppi->id().asInt() > sppj->id().asInt())
-                  spmap[sppi] = sppj;
-                else
-                  spmap[sppj] = sppi;
-              }
-            }
-          }
-        }
-      }
-    }
-    // check for remapping
-    bool changed(true);
-    while(changed){
-      changed = false;
-      for(std::map<art::Ptr<SimParticle>,art::Ptr<SimParticle> >::iterator im = spmap.begin();im!=spmap.end();++im){
-        std::map<art::Ptr<SimParticle>,art::Ptr<SimParticle> >::iterator ifnd = spmap.find(im->second);
-        if( !(ifnd->second == ifnd->first)){
-          changed = true;
-          spmap[im->first] = ifnd->second;
-        }
-      }
-    }
-    // find the most likely ultimate parent for this cluster.  Also fill general info
-    std::map<int,int> mode;
-    for(std::set<art::Ptr<SimParticle> >::iterator ipp=pp.begin();ipp!=pp.end();++ipp){
-      art::Ptr<SimParticle> spp = *ipp;
-      int mcid(-1);
-      // map back to the ultimate parent
-      spp = spmap[spp];
-      mcid = spp->id().asInt();
-      std::map<int,int>::iterator ifnd = mode.find(mcid);
-      if(ifnd != mode.end())
-        ++(ifnd->second);
-      else
-        mode[mcid] = 1;
-    }
-    int max(0);
-    std::map<int,int>::iterator imax = mode.end();
-    for(std::map<int,int>::iterator im=mode.begin();im!=mode.end();++im){
-      icontrib.push_back(im->first);
-      if(im->second>max){
-        imax=im;
-        max = im->second;
-      }
-    }
-    unsigned pid(0);
-    if(imax != mode.end())
-      pid=imax->first;
-    for(std::map<art::Ptr<SimParticle>,art::Ptr<SimParticle> >::iterator im = spmap.begin();im!=spmap.end();++im){
-      if(im->first->id().asInt() == pid){
-        mptr = im->first;
-        break;
-      }
-    }
-    // find the momentum for the first step point from the primary particle in this delta
-    for(auto id : dids) {
-      StrawDigiMC const& mcdigi = _mcdigis->at(id);
-      auto const& sgsp = mcdigi.earlyStrawGasStep();
-      art::Ptr<SimParticle> const& spp = sgsp->simParticle();
-      if(spp == mptr){
         mmom = sgsp->momentum();
         break;
       }
@@ -742,29 +607,8 @@ namespace mu2e
       art::Ptr<SimParticle> const& spp = sgsp->simParticle();
       if(spp.isNonnull()){
         MCRelationship rel(spp,mptr);
-        int code = spp->creationCode();
-        if(code == 12 or code == 17 or code == 40 or code == 165 or code == 13
-           or code == 74 or code == 58 or code == 114 or code == 166
-           or code == 21 or code == 115 or code == 97 or code == 101 or code == 78
-           or code == 113 or code == 16 or code == 23 or code == 35 or code == 72
-           or code == 56  or code == 2 or code == 31 or code == 59  or code == 109)
-          shinfo._prel = -2; //Background hit
-        else if(code == 167)
-          shinfo._prel = 1;  // CE hit
-        else{
-          shinfo._prel = 0; //CE like hit
-
-        }
+        shinfo._prel = BkgMCMatch::classify(spp->creationCode());
         shinfo._mrel = rel.relationship();
-        /*for(auto const& mcmptr : _mcprimary->primarySimParticles()){
-          MCRelationship rel(spp,mcmptr);
-          if(rel.relationship() > MCRelationship::none){
-            if(shinfo._prel > MCRelationship::none)
-              shinfo._prel = std::min(shinfo._prel,(int)rel.relationship());
-            else
-              shinfo._prel = rel.relationship();
-          }
-          }*/
       }
     }
   }
