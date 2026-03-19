@@ -507,7 +507,7 @@ namespace mu2e
       }
       _zmin = hz.front();
       _zmax = hz.back();
-      if(_nch > 2) {
+      if(_nch >= 2) {
         _zdiff = _zmax - _zmin;
         _phidiff = phimax - phimin;
       }
