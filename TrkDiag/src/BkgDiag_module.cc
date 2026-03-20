@@ -279,14 +279,19 @@ namespace mu2e
       _hitTime[_nhits]   = _chcol->at(ich).time();
       _hitnch[_nhits] = _chcol->at(ich).nCombo();
       _hitnsh[_nhits] = _chcol->at(ich).nStrawHits();
-      art::Ptr<SimParticle> spp; // main SimParticle for this
       if(_mcdiag){
         std::vector<StrawDigiIndex> dids;
         _chcol->fillStrawDigiIndices(ich,dids);
         StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);// taking 1st digi: is there a better idea??
-        spp = mcdigi.earlyStrawGasStep()->simParticle();
-        _hitPdg[_nhits] = spp->pdgId();
-        _hitproc[_nhits] = spp->creationCode();
+        art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
+        if(spp.isNonnull()){
+          _hitPdg[_nhits] = spp->pdgId();
+          _hitproc[_nhits] = spp->creationCode();
+        }
+        else{
+          _hitPdg[_nhits] = -1;
+          _hitproc[_nhits] = -1;
+        }
       }
       ++_nhits;
     }
@@ -330,6 +335,7 @@ namespace mu2e
       _nprot = 0;
       _nebkg = 0;
       _nmain = 0;
+      _nsibling = 0;
       _mmom = XYZVectorF();
       _mopos = XYZVectorF();
       _mpdg = _mproc = 0;
@@ -338,7 +344,6 @@ namespace mu2e
         // fill vector of indices to all digis used in this cluster's hits
         // this goes recursively through the ComboHit chain
         std::vector<StrawDigiIndex> cdids;
-        //std::cout<<"Cluster hits size = "<<cluster.hits().size()<<std::endl;
         for(auto const& ich : cluster.hits()){
           // get the list of StrawHit indices associated with this ComboHit
           _chcol->fillStrawDigiIndices(ich,cdids);
@@ -357,18 +362,9 @@ namespace mu2e
       _bkghinfo.reserve(cluster.hits().size());
       _nch = cluster.hits().size();
       _nsh = _nsth = _nactive = _nsha = _nbkg = _nrel = 0;
-      float sumEdep(0.);
-      float sumEcc(0.);
-      float sqrSumDeltaTime(0.);
-      float sqrSumDeltaX(0.);
-      float sqrSumDeltaY(0.);
-      float sqrSumDeltaPhi(0.);
-      float sqrSumQual(0.);
-      float sumPitch(0.);
-      float sumYaw(0.);
-      float sumwPitch(0.);
-      float sumwYaw(0.);
-      float sumwEcc(0.);
+      float sumEdep(0.), sumEcc(0.);
+      float sqrSumDeltaTime(0.), sqrSumDeltaX(0.), sqrSumDeltaY(0.), sqrSumDeltaPhi(0.), sqrSumQual(0.);
+      float sumPitch(0.), sumYaw(0.), sumwPitch(0.), sumwYaw(0.), sumwEcc(0.);
       float phihit(0.), phiclust(0.), phidiff(0.);
       float phimin = std::numeric_limits<float>::max();
       float phimax = -std::numeric_limits<float>::max();
@@ -442,7 +438,7 @@ namespace mu2e
         StrawHitFlag const& shf = bhit.flag();
         if(shf.hasAllProperties(StrawHitFlag::active)){
           _nactive += ch.nStrawHits();
-          if(StrawIdMask::station == ch._mask) _nsha+= ch.nStrawHits();
+          if(ch._mask.level() == StrawIdMask::station) _nsha+= ch.nStrawHits();
         }
         if(shf.hasAllProperties(StrawHitFlag::bkg))_nbkg+= ch.nStrawHits();
         // fill hit-specific information
@@ -493,9 +489,9 @@ namespace mu2e
       _zgap = 0.0;
       _zdiff = 0.0;
       _phidiff = 0.0;
-      for (unsigned iz=1;iz<hz.size();++iz){
-        _zgap = std::max(_zgap,hz[iz]-hz[iz-1]);
-      }
+      _zmin = 0.0,
+      _zmax = 0.0;
+      for (unsigned iz=1;iz<hz.size();++iz) _zgap = std::max(_zgap,hz[iz]-hz[iz-1]);
       if(!hz.empty()){
         _zmin = hz.front();
         _zmax = hz.back();
@@ -506,7 +502,7 @@ namespace mu2e
       }
       _lp = -1; // last plane in cluster
       _fp = StrawId::_nplanes; // first plane in cluster
-      _np = 0;//# of planes
+      _np = 0; // # of planes
       _pgap = 0; // largest plane gap
       int lp(-1); // last plane seen
       for(int ip=0;ip < StrawId::_nplanes; ++ip){
@@ -518,7 +514,7 @@ namespace mu2e
           lp = ip;
         }
       }
-      _pfrac = static_cast<float>(_np)/static_cast<float>(_lp - _fp);
+      _pfrac = (_lp != _fp) ? static_cast<float>(_np)/static_cast<float>(_lp - _fp) : 1.0f; 
       _bcdiag->Fill();
       ++_cluIdx;
     }
@@ -527,7 +523,6 @@ namespace mu2e
 
   bool BkgDiag::findData(const art::Event& evt){
     _chcol = 0; _bkgccol = 0; _mcdigis = 0;
-    // nb: getValidHandle does the protection (exception) on handle validity so I don't have to
     auto chH = evt.getValidHandle(_chToken);
     _chcol = chH.product();
     auto bkgcH = evt.getValidHandle(_bkgcToken);
@@ -544,42 +539,75 @@ namespace mu2e
       && ( (_mcdigis != 0 && _mcprimary != 0)  || !_mcdiag);
   }
 
-  void BkgDiag::findMajority(std::vector<uint16_t>const& dids, art::Ptr<SimParticle>& mptr,XYZVectorF& mmom, int& mostCommonCode, float& fraction)
-    const {
-    // find the unique simparticles which produced these hits
-    mostCommonCode = -1;
-    fraction = 0.0;
+  // This function performs a two-stage truth-matching validation:
+  // 1. Process Majority (>50%): The cluster is assigned a 'mostCommonCode' if more than half of the StrawDigis in the cluster share that same creation code.
+  // 2. Particle Purity (>80%): To avoid assigning a representative SimParticle (mptr) * and momentum (mmom) to a "fragmented" cluster, a single particle
+  // must account for > 80% of the hits belonging to that majority process.
+  // If these conditions are not met, mptr is returned as a null Ptr and mmom is set to zero.
+  void BkgDiag::findMajority(std::vector<StrawDigiIndex> const& dids, art::Ptr<SimParticle>& mptr, XYZVectorF& mmom, int& mostCommonCode, float& fraction) const {
+    // Reset outputs
     mptr = art::Ptr<SimParticle>();
     mmom = XYZVectorF();
-    std::map<int, unsigned> codeCount;
-    for(auto id : dids) {
-      StrawDigiMC const& mcdigi = _mcdigis->at(id);
-      art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
-      if(spp.isNonnull()){
-        int creationCode = spp->creationCode();
-        ++codeCount[creationCode];
-      }
-    }
-    // Find most common code
-    unsigned maxCount = 0;
-    for(auto const& kv : codeCount) {
-      if(kv.second > maxCount) {
-        maxCount = kv.second;
-        mostCommonCode = kv.first;
-      }
-    }
-    if(!dids.empty())
-      fraction = static_cast<float>(maxCount)/static_cast<float>(dids.size());
-    // Second pass: find momentum of first matching digi
-    for(auto id : dids) {
+    mostCommonCode = -1;
+    fraction = 0.0;
+
+    if (dids.empty()) return;
+
+    // 1. Data structures to track process and individual particles
+    std::map<int, unsigned> codeCounts;
+    std::map<art::Ptr<SimParticle>, unsigned> particleCounts;
+    std::map<art::Ptr<SimParticle>, XYZVectorF> particleMoms;
+
+    for (auto id : dids) {
       StrawDigiMC const& mcdigi = _mcdigis->at(id);
       auto const& sgsp = mcdigi.earlyStrawGasStep();
-      art::Ptr<SimParticle> const& spp = sgsp->simParticle();
-      if(spp.isNull()) continue;
-      if(spp->creationCode() == mostCommonCode) {
-        mptr = spp;
-        mmom = sgsp->momentum();
-        break;
+      if (sgsp.isNonnull()) {
+        art::Ptr<SimParticle> const& spp = sgsp->simParticle();
+        if (spp.isNonnull()) {
+          int c = spp->creationCode();
+          codeCounts[c]++;
+          particleCounts[spp]++;
+          // Store momentum of the first time we see this specific particle
+          if (particleMoms.find(spp) == particleMoms.end()) {
+            particleMoms[spp] = sgsp->momentum();
+          }
+        }
+      }
+    }
+
+    // 2. Find the winning creation code
+    int bestCode = -1;
+    unsigned maxCodeCount = 0;
+    for (auto const& [code, count] : codeCounts) {
+      if (count > maxCodeCount) {
+        maxCodeCount = count;
+        bestCode = code;
+      }
+    }
+
+    // 3. Evaluate Condition 1: Creation Code Majority > 50%
+    float codeFrac = static_cast<float>(maxCodeCount) / static_cast<float>(dids.size()); 
+    if (bestCode != -1 && codeFrac > 0.5) {
+      // 4. Find the dominant particle WITHIN that winning code
+      art::Ptr<SimParticle> bestPart;
+      unsigned maxPartCount = 0;
+
+      for (auto const& [spp, count] : particleCounts) {
+        if (spp->creationCode() == bestCode) {
+          if (count > maxPartCount) {
+            maxPartCount = count;
+            bestPart = spp;
+          }
+        }
+      }
+
+      // 5. Evaluate Condition 2: Particle represents > 80% of that code's hits
+      float partInCodeFrac = static_cast<float>(maxPartCount) / static_cast<float>(maxCodeCount);
+      if (bestPart.isNonnull() && partInCodeFrac > 0.8) {
+        mptr = bestPart;
+        mmom = particleMoms[bestPart];
+        mostCommonCode = bestCode;
+        fraction = codeFrac; // Reporting the process fraction
       }
     }
   }

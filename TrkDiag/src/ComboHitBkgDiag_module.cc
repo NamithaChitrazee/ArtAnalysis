@@ -72,7 +72,7 @@ namespace mu2e{
 
       _pdg = 0;
       _creationCode = -1;
-      _flaggedBkg = false;
+      _flaggedBkg = ch.flag().hasAllProperties(StrawHitFlag::bkg);
       std::vector<StrawDigiIndex> dids;
       _chcol->fillStrawDigiIndices(ich, dids);
 
@@ -80,11 +80,13 @@ namespace mu2e{
         _tree->Fill();
         continue;
       }
-      for(auto id : dids){
-        StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
-        auto const& sgsp = mcdigi.earlyStrawGasStep();
-        art::Ptr<SimParticle> const& sp = sgsp->simParticle();
-        if(sp.isNull()) continue;
+      // Only looking at the first StrawDigi to find the MC true particle info
+      // Using first StrawDigi as a representative of the ComboHit
+      // This logic could be refined but it works for now
+      StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
+      auto const& sgsp = mcdigi.earlyStrawGasStep();
+      art::Ptr<SimParticle> const& sp = sgsp->simParticle();
+      if(sp.isNonnull()){ 
         _pdg = sp->pdgId();
         ProcessCode pCode = sp->creationCode();
         _creationCode = pCode;
@@ -96,8 +98,6 @@ namespace mu2e{
         else
           _totalsig += ch.nStrawHits();
 
-        _flaggedBkg = ch.flag().hasAllProperties(StrawHitFlag::bkg);
-
         if(_flaggedBkg){
           if(BkgMCMatch::isBackground(pCode))
             _bkgtrue += ch.nStrawHits();
@@ -106,8 +106,9 @@ namespace mu2e{
           else
             _sigmis += ch.nStrawHits();
         }
-        _tree->Fill();
       }
+      //The tree is filled per ComboHit
+      _tree->Fill();
     }
   }
 
