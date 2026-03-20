@@ -85,26 +85,28 @@ namespace mu2e{
       // This logic could be refined but it works for now
       StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
       auto const& sgsp = mcdigi.earlyStrawGasStep();
-      art::Ptr<SimParticle> const& sp = sgsp->simParticle();
-      if(sp.isNonnull()){ 
-        _pdg = sp->pdgId();
-        ProcessCode pCode = sp->creationCode();
-        _creationCode = pCode;
+      if(sgsp.isNonnull()){
+        art::Ptr<SimParticle> const& sp = sgsp->simParticle();
+        if(sp.isNonnull()){ 
+          _pdg = sp->pdgId();
+          ProcessCode pCode = sp->creationCode();
+          _creationCode = pCode;
 
-        if(BkgMCMatch::isCE(pCode))
-          _totalce += ch.nStrawHits();
-        else if(BkgMCMatch::isBackground(pCode))
-          _totalbkg += ch.nStrawHits();
-        else
-          _totalsig += ch.nStrawHits();
-
-        if(_flaggedBkg){
-          if(BkgMCMatch::isBackground(pCode))
-            _bkgtrue += ch.nStrawHits();
-          else if(BkgMCMatch::isCE(pCode))
-            _cemis += ch.nStrawHits();
+          if(BkgMCMatch::isCE(pCode))
+            _totalce += ch.nStrawHits();
+          else if(BkgMCMatch::isBackground(pCode))
+            _totalbkg += ch.nStrawHits();
           else
-            _sigmis += ch.nStrawHits();
+            _totalsig += ch.nStrawHits();
+
+          if(_flaggedBkg){
+            if(BkgMCMatch::isBackground(pCode))
+              _bkgtrue += ch.nStrawHits();
+            else if(BkgMCMatch::isCE(pCode))
+              _cemis += ch.nStrawHits();
+            else
+              _sigmis += ch.nStrawHits();
+          }
         }
       }
       //The tree is filled per ComboHit

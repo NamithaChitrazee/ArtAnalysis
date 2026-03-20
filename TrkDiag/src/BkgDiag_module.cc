@@ -135,7 +135,7 @@ namespace mu2e
 
       // MC truth variables
       int _mpdg, _mproc;
-      int _prel;
+      int _prel; // Set to -2 if a clsuter is identified as bkg after MC comparison, 0 if it is signal-like cluster, 1 if it is CE hits cluster
       int _code;
       float _frac;
       XYZVectorF _mmom, _mopos;
@@ -244,8 +244,6 @@ namespace mu2e
       _bcdiag->Branch("ngconv",&_ngconv,"ngconv/I");
       _bcdiag->Branch("nebkg",&_nebkg,"nebkg/I");
       _bcdiag->Branch("nprot",&_nprot,"nprot/I");
-      //_bcdiag->Branch("ncontrib",&_ncontrib,"ncontrib/I");
-      //_bcdiag->Branch("icontrib",&_icontrib,"icontrib[ncontrib]/I");
     }
     if(_hdiag){
       _bhdiag = tfs->make<TTree>("bkghdiag","background hit diagnostics");
@@ -283,14 +281,17 @@ namespace mu2e
         std::vector<StrawDigiIndex> dids;
         _chcol->fillStrawDigiIndices(ich,dids);
         StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);// taking 1st digi: is there a better idea??
-        art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
-        if(spp.isNonnull()){
-          _hitPdg[_nhits] = spp->pdgId();
-          _hitproc[_nhits] = spp->creationCode();
-        }
-        else{
-          _hitPdg[_nhits] = -1;
-          _hitproc[_nhits] = -1;
+        auto const& sgsp = mcdigi.earlyStrawGasStep();
+        if (sgsp.isNonnull()){
+          art::Ptr<SimParticle> const& spp = mcdigi.earlyStrawGasStep()->simParticle();
+          if(spp.isNonnull()){
+            _hitPdg[_nhits] = spp->pdgId();
+            _hitproc[_nhits] = spp->creationCode();
+          }
+          else{
+            _hitPdg[_nhits] = -1;
+            _hitproc[_nhits] = -1;
+          }
         }
       }
       ++_nhits;
@@ -348,7 +349,6 @@ namespace mu2e
           // get the list of StrawHit indices associated with this ComboHit
           _chcol->fillStrawDigiIndices(ich,cdids);
         }
-        std::vector<int> icontrib;
         findMajority(cdids,mptr,_mmom,_code, _frac);
         if(mptr.isNonnull()){
           _mpdg = mptr->pdgId();
@@ -489,7 +489,7 @@ namespace mu2e
       _zgap = 0.0;
       _zdiff = 0.0;
       _phidiff = 0.0;
-      _zmin = 0.0,
+      _zmin = 0.0;
       _zmax = 0.0;
       for (unsigned iz=1;iz<hz.size();++iz) _zgap = std::max(_zgap,hz[iz]-hz[iz-1]);
       if(!hz.empty()){

@@ -11,9 +11,7 @@ namespace mu2e {
 
   class BkgMCMatch {
   public:
-    // Classification results
-    enum class Classification { Background = -2, Unknown = 0, Signal = 1 };
-
+   
     static bool isBackground(ProcessCode code) {
       static const std::set<ProcessCode> bkgCodes = {
         ProcessCode::annihil,                 // 2
