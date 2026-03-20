@@ -9,10 +9,9 @@
 
 namespace mu2e {
 
-  class BkgMCMatch {
-  public:
+  namespace BkgMCMatch {
    
-    static bool isBackground(ProcessCode code) {
+    inline bool isBackground(ProcessCode code) {
       static const std::set<ProcessCode> bkgCodes = {
         ProcessCode::annihil,                 // 2
         ProcessCode::compt,                   // 12
@@ -42,16 +41,16 @@ namespace mu2e {
       return bkgCodes.find(code) != bkgCodes.end();
     }
 
-    static bool isCE(ProcessCode code) {
+    inline bool isCE(ProcessCode code) {
       return code == ProcessCode::mu2eCeMinusEndpoint; // 167
     }
 
-    static int classify(ProcessCode code) {
+    inline int classify(ProcessCode code) {
       if (isCE(code)) return 1;
       if (isBackground(code)) return -2;
       return 0;
     }
-  };
+  }
 
 }
 
