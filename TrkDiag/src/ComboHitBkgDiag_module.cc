@@ -11,103 +11,114 @@
 
 #include "TTree.h"
 
-using namespace mu2e;
+namespace mu2e{
 
-class ComboHitBkgDiag : public art::EDAnalyzer {
-public:
-  struct Config {
-    fhicl::Atom<art::InputTag> ComboHitCollection { fhicl::Name("ComboHitCollection") };
-    fhicl::Atom<art::InputTag> StrawDigiMCCollection { fhicl::Name("StrawDigiMCCollection") };
+  class ComboHitBkgDiag : public art::EDAnalyzer {
+  public:
+    struct Config {
+      fhicl::Atom<art::InputTag> ComboHitCollection { fhicl::Name("ComboHitCollection") };
+      fhicl::Atom<art::InputTag> StrawDigiMCCollection { fhicl::Name("StrawDigiMCCollection") };
+    };
+
+    explicit ComboHitBkgDiag(const art::EDAnalyzer::Table<Config>& config);
+
+    void beginJob() override;
+    void analyze(const art::Event& e) override;
+    void endJob() override;
+
+  private:
+    art::ProductToken<ComboHitCollection> _chToken;
+    art::ProductToken<StrawDigiMCCollection> _mcdigiToken;
+
+    const ComboHitCollection* _chcol = nullptr;
+    const StrawDigiMCCollection* _mcdigis = nullptr;
+
+    TTree* _tree = nullptr;
+
+    int _iev;
+    int _creationCode;
+    int _pdg;
+    bool _flaggedBkg;
+    int _totalce = 0;
+    int _totalbkg = 0;
+    int _totalsig = 0;
+    int _cemis = 0;
+    int _bkgtrue = 0;
+    int _sigmis = 0;
   };
 
-  explicit ComboHitBkgDiag(const art::EDAnalyzer::Table<Config>& config);
+  ComboHitBkgDiag::ComboHitBkgDiag(const art::EDAnalyzer::Table<Config>& config) :
+    art::EDAnalyzer{config},
+    _chToken(consumes<ComboHitCollection>(config().ComboHitCollection())),
+    _mcdigiToken(consumes<StrawDigiMCCollection>(config().StrawDigiMCCollection()))
+  {}
 
-  void beginJob() override;
-  void analyze(const art::Event& e) override;
-  void endJob() override;
+  void ComboHitBkgDiag::beginJob() {
+    art::ServiceHandle<art::TFileService> tfs;
+    _tree = tfs->make<TTree>("chbkg", "ComboHit background truth check");
+    _tree->Branch("iev", &_iev, "iev/I");
+    _tree->Branch("creationCode", &_creationCode, "creationCode/I");
+    _tree->Branch("pdg", &_pdg, "pdg/I");
+    _tree->Branch("flaggedBkg", &_flaggedBkg, "flaggedBkg/O");
+  }
 
-private:
-  art::ProductToken<ComboHitCollection> _chToken;
-  art::ProductToken<StrawDigiMCCollection> _mcdigiToken;
+  void ComboHitBkgDiag::analyze(const art::Event& event) {
+    _iev = event.id().event();
+    _chcol = event.getValidHandle(_chToken).product();
+    _mcdigis = event.getValidHandle(_mcdigiToken).product();
 
-  const ComboHitCollection* _chcol = nullptr;
-  const StrawDigiMCCollection* _mcdigis = nullptr;
+    for (size_t ich = 0; ich < _chcol->size(); ++ich) {
+      ComboHit const& ch = _chcol->at(ich);
 
-  TTree* _tree = nullptr;
+      _pdg = 0;
+      _creationCode = -1;
+      _flaggedBkg = false;
+      std::vector<StrawDigiIndex> dids;
+      _chcol->fillStrawDigiIndices(ich, dids);
 
-  int _iev;
-  int _creationCode;
-  int _pdg;
-  bool _flaggedBkg;
-  int _totalce = 0;
-  int _totalbkg = 0;
-  int _totalsig = 0;
-  int _cemis = 0;
-  int _bkgtrue = 0;
-  int _sigmis = 0;
-};
+      if(dids.empty()){
+        _tree->Fill();
+        continue;
+      }
+      for(auto id : dids){
+        StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
+        auto const& sgsp = mcdigi.earlyStrawGasStep();
+        art::Ptr<SimParticle> const& sp = sgsp->simParticle();
+        if(sp.isNull()) continue;
+        _pdg = sp->pdgId();
+        ProcessCode pCode = sp->creationCode();
+        _creationCode = pCode;
 
-ComboHitBkgDiag::ComboHitBkgDiag(const art::EDAnalyzer::Table<Config>& config) :
-  art::EDAnalyzer{config},
-  _chToken(consumes<ComboHitCollection>(config().ComboHitCollection())),
-  _mcdigiToken(consumes<StrawDigiMCCollection>(config().StrawDigiMCCollection()))
-{}
-
-void ComboHitBkgDiag::beginJob() {
-  art::ServiceHandle<art::TFileService> tfs;
-  _tree = tfs->make<TTree>("chbkg", "ComboHit background truth check");
-  _tree->Branch("iev", &_iev, "iev/I");
-  _tree->Branch("creationCode", &_creationCode, "creationCode/I");
-  _tree->Branch("pdg", &_pdg, "pdg/I");
-  _tree->Branch("flaggedBkg", &_flaggedBkg, "flaggedBkg/O");
-}
-
-void ComboHitBkgDiag::analyze(const art::Event& event) {
-  _iev = event.id().event();
-
-  _chcol = event.getValidHandle(_chToken).product();
-  _mcdigis = event.getValidHandle(_mcdigiToken).product();
-  for (size_t ich = 0; ich < _chcol->size(); ++ich) {
-    ComboHit const& ch = _chcol->at(ich);
-
-    std::vector<StrawDigiIndex> dids;
-    _chcol->fillStrawDigiIndices(ich, dids);
-
-    StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
-    auto const& sgsp = mcdigi.earlyStrawGasStep();
-    art::Ptr<SimParticle> const& sp = sgsp->simParticle();
-    if(sp.isNonnull()){
-      _pdg = sp->pdgId();
-      ProcessCode pCode = sp->creationCode();
-      if(BkgMCMatch::isCE(pCode))
-        _totalce += ch.nStrawHits();
-      else if(BkgMCMatch::isBackground(pCode))
-        _totalbkg += ch.nStrawHits(); 
-      else
-        _totalsig += ch.nStrawHits();
-      
-      _flaggedBkg = ch.flag().hasAllProperties(StrawHitFlag::bkg);
-      
-      if(_flaggedBkg){
-        if(BkgMCMatch::isBackground(pCode))
-          _bkgtrue += ch.nStrawHits();
-        else if(BkgMCMatch::isCE(pCode))
-          _cemis += ch.nStrawHits(); 
+        if(BkgMCMatch::isCE(pCode))
+          _totalce += ch.nStrawHits();
+        else if(BkgMCMatch::isBackground(pCode))
+          _totalbkg += ch.nStrawHits();
         else
-          _sigmis += ch.nStrawHits();
+          _totalsig += ch.nStrawHits();
+
+        _flaggedBkg = ch.flag().hasAllProperties(StrawHitFlag::bkg);
+
+        if(_flaggedBkg){
+          if(BkgMCMatch::isBackground(pCode))
+            _bkgtrue += ch.nStrawHits();
+          else if(BkgMCMatch::isCE(pCode))
+            _cemis += ch.nStrawHits();
+          else
+            _sigmis += ch.nStrawHits();
+        }
+        _tree->Fill();
       }
     }
-    _tree->Fill();
+  }
+
+  void ComboHitBkgDiag::endJob() {
+    std::cout << "====================================\n";
+    std::cout << " FINAL COUNTS OVER ALL EVENTS\n";
+    std::cout << " Total background hits = " << _totalbkg <<" True background hits = " << _bkgtrue << "\n";
+    std::cout << " Total CE hits = " << _totalce <<" CE mis-tagged hits = " << _cemis   << "\n";
+    std::cout << " Total Signal hits = "<< _totalsig <<" Signal mis-tagged hits  = " << _sigmis  << "\n";
+    std::cout << "====================================\n";
   }
 }
-
-void ComboHitBkgDiag::endJob() {
-  std::cout << "====================================\n";
-  std::cout << " FINAL COUNTS OVER ALL EVENTS\n";
-  std::cout << " Total background hits = " << _totalbkg <<" True background hits = " << _bkgtrue << "\n";
-  std::cout << " Total CE hits = " << _totalce <<" CE mis-tagged hits = " << _cemis   << "\n";
-  std::cout << " Total Signal hits = "<< _totalsig <<" Signal mis-tagged hits  = " << _sigmis  << "\n";
-  std::cout << "====================================\n";
-}
-
+using mu2e::ComboHitBkgDiag;
 DEFINE_ART_MODULE(ComboHitBkgDiag)

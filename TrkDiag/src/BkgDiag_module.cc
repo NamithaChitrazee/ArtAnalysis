@@ -69,7 +69,6 @@ namespace mu2e
       void fillStrawHitInfoMC(StrawDigiMC const& mcdigi, art::Ptr<SimParticle>const& mptr, StrawHitInfo& shinfo) const;
       bool findData(const art::Event& e);
       void findMajority(std::vector<StrawDigiIndex>const& dids, art::Ptr<SimParticle>& mptr,XYZVectorF& mmom, int& mostCommonCode, float& fraction) const;
-      void findMain(std::vector<StrawDigiIndex>const& dids, art::Ptr<SimParticle>& mptr,XYZVectorF& mmom, std::vector<int>& icontrib) const;
 
       // control flags
       int _diag,_debug;
@@ -135,7 +134,7 @@ namespace mu2e
       int _np, _fp, _lp, _pgap;
 
       // MC truth variables
-      int _mpdg, _mproc; // _ncontrib, _icontrib[512];
+      int _mpdg, _mproc;
       int _prel;
       int _code;
       float _frac;
@@ -334,7 +333,6 @@ namespace mu2e
       _mmom = XYZVectorF();
       _mopos = XYZVectorF();
       _mpdg = _mproc = 0;
-      //_ncontrib = 0;
       _prel=-1;
       if(_mcdiag){
         // fill vector of indices to all digis used in this cluster's hits
@@ -346,13 +344,11 @@ namespace mu2e
           _chcol->fillStrawDigiIndices(ich,cdids);
         }
         std::vector<int> icontrib;
-        //findMain(cdids,mptr,_mmom,icontrib);
         findMajority(cdids,mptr,_mmom,_code, _frac);
         if(mptr.isNonnull()){
           _mpdg = mptr->pdgId();
           _mproc = mptr->creationCode();
           _mopos = mptr->startPosXYZ();
-          //for (int ic : icontrib) {_icontrib[_ncontrib]=ic; ++_ncontrib;}
           _prel = BkgMCMatch::classify(mptr->creationCode());
         }
       }
@@ -361,7 +357,6 @@ namespace mu2e
       _bkghinfo.reserve(cluster.hits().size());
       _nch = cluster.hits().size();
       _nsh = _nsth = _nactive = _nsha = _nbkg = _nrel = 0;
-      //int misCE(0);
       float sumEdep(0.);
       float sumEcc(0.);
       float sqrSumDeltaTime(0.);
@@ -380,14 +375,10 @@ namespace mu2e
       std::vector<int> strawIds;
       std::vector<int> panelIds;
       std::vector<float> hz;
-      std::vector<float> hphi;
       std::array<bool,StrawId::_nplanes> hp{false};
       phiclust = _cpos.phi();
-      if(phiclust < -M_PI) phiclust +=2*M_PI;
-      if(phiclust > M_PI) phiclust -=2*M_PI;
       for(auto const& ich : cluster.hits()){
         ComboHit const& ch = _chcol->at(ich);
-        hphi.push_back(ch.pos().phi());
         hz.push_back(ch.pos().Z());
         hp[ch.strawId().plane()] = true;
         BkgClusterHit const& bhit = _bkghitcol->at(ich);
@@ -505,8 +496,10 @@ namespace mu2e
       for (unsigned iz=1;iz<hz.size();++iz){
         _zgap = std::max(_zgap,hz[iz]-hz[iz-1]);
       }
-      _zmin = hz.front();
-      _zmax = hz.back();
+      if(!hz.empty()){
+        _zmin = hz.front();
+        _zmax = hz.back();
+      }
       if(_nch >= 2) {
         _zdiff = _zmax - _zmin;
         _phidiff = phimax - phimin;
@@ -556,6 +549,8 @@ namespace mu2e
     // find the unique simparticles which produced these hits
     mostCommonCode = -1;
     fraction = 0.0;
+    mptr = art::Ptr<SimParticle>();
+    mmom = XYZVectorF();
     std::map<int, unsigned> codeCount;
     for(auto id : dids) {
       StrawDigiMC const& mcdigi = _mcdigis->at(id);
@@ -573,15 +568,16 @@ namespace mu2e
         mostCommonCode = kv.first;
       }
     }
-    fraction = static_cast<float>(maxCount)/static_cast<float>(dids.size());
+    if(!dids.empty())
+      fraction = static_cast<float>(maxCount)/static_cast<float>(dids.size());
     // Second pass: find momentum of first matching digi
     for(auto id : dids) {
       StrawDigiMC const& mcdigi = _mcdigis->at(id);
       auto const& sgsp = mcdigi.earlyStrawGasStep();
       art::Ptr<SimParticle> const& spp = sgsp->simParticle();
       if(spp.isNull()) continue;
-      mptr = spp;
       if(spp->creationCode() == mostCommonCode) {
+        mptr = spp;
         mmom = sgsp->momentum();
         break;
       }
