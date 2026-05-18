@@ -388,7 +388,7 @@ namespace mu2e
         if(phidiff < phimin) phimin = phidiff;
         if(phidiff > phimax) phimax = phidiff;
         sqrSumDeltaPhi += std::pow(phidiff,2);
-        sqrSumDeltaTime += std::pow(ch.time() - _ctime,2);
+        sqrSumDeltaTime += std::pow(ch.correctedTime() - _ctime,2);
         auto hdir = ch.hDir();
         auto wecc = ch.nStrawHits();
         sumEcc += std::sqrt(1-(ch.vVar()/ch.uVar()))*wecc;
