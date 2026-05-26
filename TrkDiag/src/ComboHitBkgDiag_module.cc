@@ -117,8 +117,8 @@ namespace mu2e{
       _tree->Fill();
     }
 
-    // Collect correctedTime per non-CE SimParticle to compute intra-particle hit time differences
-    std::map<art::Ptr<SimParticle>, std::vector<float>> particleTimes;
+    // Collect (correctedTime, z) per non-CE SimParticle to compute intra-particle hit time and z differences
+    std::map<art::Ptr<SimParticle>, std::vector<std::pair<float,float>>> particleHits;
     for (size_t ich = 0; ich < _chcol->size(); ++ich) {
       ComboHit const& ch = _chcol->at(ich);
       std::vector<StrawDigiIndex> dids;
@@ -130,19 +130,20 @@ namespace mu2e{
       art::Ptr<SimParticle> const& sp = sgsp->simParticle();
       if (!sp.isNonnull()) continue;
       if (BkgMCMatch::isCE(sp->creationCode())) continue; // skip CE (creationCode 167)
-      particleTimes[sp].push_back(ch.correctedTime());
+      particleHits[sp].emplace_back(ch.correctedTime(), ch.pos().z());
     }
 
-    for (auto& [sp, times] : particleTimes) {
-      if (times.size() < 2) continue;
-      std::sort(times.begin(), times.end());
+    for (auto& [sp, hits] : particleHits) {
+      if (hits.size() < 2) continue;
+      std::sort(hits.begin(), hits.end()); // sorts by time (first element)
       std::cout << "Event " << _iev
                 << " SimParticle pdg=" << sp->pdgId()
                 << " creationCode=" << static_cast<int>(sp->creationCode())
-                << " nHits=" << times.size()
-                << " time diffs (ns):";
-      for (size_t i = 1; i < times.size(); ++i)
-        std::cout << " " << (times[i] - times[i-1]);
+                << " nHits=" << hits.size()
+                << " time diffs (ns) / dz (mm):";
+      for (size_t i = 1; i < hits.size(); ++i)
+        std::cout << " " << (hits[i].first - hits[i-1].first)
+                  << "/" << (hits[i].second - hits[i-1].second);
       std::cout << "\n";
     }
   }
