@@ -3,6 +3,10 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "art_root_io/TFileService.h"
 
+#include <algorithm>
+#include <map>
+#include <vector>
+
 #include "Offline/RecoDataProducts/inc/ComboHit.hh"
 #include "Offline/RecoDataProducts/inc/StrawHitFlag.hh"
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
@@ -111,6 +115,35 @@ namespace mu2e{
       }
       //The tree is filled per ComboHit
       _tree->Fill();
+    }
+
+    // Collect correctedTime per non-CE SimParticle to compute intra-particle hit time differences
+    std::map<art::Ptr<SimParticle>, std::vector<float>> particleTimes;
+    for (size_t ich = 0; ich < _chcol->size(); ++ich) {
+      ComboHit const& ch = _chcol->at(ich);
+      std::vector<StrawDigiIndex> dids;
+      _chcol->fillStrawDigiIndices(ich, dids);
+      if (dids.empty()) continue;
+      StrawDigiMC const& mcdigi = _mcdigis->at(dids[0]);
+      auto const& sgsp = mcdigi.earlyStrawGasStep();
+      if (!sgsp.isNonnull()) continue;
+      art::Ptr<SimParticle> const& sp = sgsp->simParticle();
+      if (!sp.isNonnull()) continue;
+      if (BkgMCMatch::isCE(sp->creationCode())) continue; // skip CE (creationCode 167)
+      particleTimes[sp].push_back(ch.correctedTime());
+    }
+
+    for (auto& [sp, times] : particleTimes) {
+      if (times.size() < 2) continue;
+      std::sort(times.begin(), times.end());
+      std::cout << "Event " << _iev
+                << " SimParticle pdg=" << sp->pdgId()
+                << " creationCode=" << static_cast<int>(sp->creationCode())
+                << " nHits=" << times.size()
+                << " time diffs (ns):";
+      for (size_t i = 1; i < times.size(); ++i)
+        std::cout << " " << (times[i] - times[i-1]);
+      std::cout << "\n";
     }
   }
 
