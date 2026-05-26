@@ -117,8 +117,9 @@ namespace mu2e{
       _tree->Fill();
     }
 
-    // Collect (correctedTime, z) per non-CE SimParticle to compute intra-particle hit time and z differences
-    std::map<art::Ptr<SimParticle>, std::vector<std::pair<float,float>>> particleHits;
+    // Collect (correctedTime, x, y, z) per non-CE SimParticle to compute intra-particle hit differences
+    struct HitPos { float t, x, y, z; };
+    std::map<art::Ptr<SimParticle>, std::vector<HitPos>> particleHits;
     for (size_t ich = 0; ich < _chcol->size(); ++ich) {
       ComboHit const& ch = _chcol->at(ich);
       std::vector<StrawDigiIndex> dids;
@@ -130,20 +131,23 @@ namespace mu2e{
       art::Ptr<SimParticle> const& sp = sgsp->simParticle();
       if (!sp.isNonnull()) continue;
       if (BkgMCMatch::isCE(sp->creationCode())) continue; // skip CE (creationCode 167)
-      particleHits[sp].emplace_back(ch.correctedTime(), ch.pos().z());
+      particleHits[sp].push_back({ch.correctedTime(), ch.pos().x(), ch.pos().y(), ch.pos().z()});
     }
 
     for (auto& [sp, hits] : particleHits) {
       if (hits.size() < 2) continue;
-      std::sort(hits.begin(), hits.end()); // sorts by time (first element)
+      std::sort(hits.begin(), hits.end(), [](const HitPos& a, const HitPos& b){ return a.t < b.t; });
       std::cout << "Event " << _iev
                 << " SimParticle pdg=" << sp->pdgId()
                 << " creationCode=" << static_cast<int>(sp->creationCode())
                 << " nHits=" << hits.size()
-                << " time diffs (ns) / dz (mm):";
-      for (size_t i = 1; i < hits.size(); ++i)
-        std::cout << " " << (hits[i].first - hits[i-1].first)
-                  << "/" << (hits[i].second - hits[i-1].second);
+                << " [dt(ns) / dz(mm) / dx^2+dy^2(mm^2)]:";
+      for (size_t i = 1; i < hits.size(); ++i) {
+        float dx = hits[i].x - hits[i-1].x, dy = hits[i].y - hits[i-1].y;
+        std::cout << " " << (hits[i].t - hits[i-1].t)
+                  << "/" << (hits[i].z - hits[i-1].z)
+                  << "/" << (dx*dx + dy*dy);
+      }
       std::cout << "\n";
     }
   }
