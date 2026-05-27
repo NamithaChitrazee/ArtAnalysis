@@ -136,7 +136,7 @@ namespace mu2e{
 
     for (auto& [sp, hits] : particleHits) {
       if (hits.size() < 2) continue;
-      std::sort(hits.begin(), hits.end(), [](const HitPos& a, const HitPos& b){ return a.t < b.t; });
+      std::sort(hits.begin(), hits.end(), [](const HitPos& a, const HitPos& b){ return a.z > b.z; });
       std::cout << "Event " << _iev
                 << " SimParticle pdg=" << sp->pdgId()
                 << " creationCode=" << static_cast<int>(sp->creationCode())
