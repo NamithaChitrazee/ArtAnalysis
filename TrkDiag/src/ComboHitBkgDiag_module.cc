@@ -118,7 +118,7 @@ namespace mu2e{
     }
 
     // Collect (correctedTime, x, y, z) per non-CE SimParticle to compute intra-particle hit differences
-    struct HitPos { float t, x, y, z; };
+    struct HitPos { float t, x, y, z; uint16_t sid; };
     std::map<art::Ptr<SimParticle>, std::vector<HitPos>> particleHits;
     for (size_t ich = 0; ich < _chcol->size(); ++ich) {
       ComboHit const& ch = _chcol->at(ich);
@@ -131,7 +131,7 @@ namespace mu2e{
       art::Ptr<SimParticle> const& sp = sgsp->simParticle();
       if (!sp.isNonnull()) continue;
       if (BkgMCMatch::isCE(sp->creationCode())) continue; // skip CE (creationCode 167)
-      particleHits[sp].push_back({ch.correctedTime(), ch.pos().x(), ch.pos().y(), ch.pos().z()});
+      particleHits[sp].push_back({ch.correctedTime(), ch.pos().x(), ch.pos().y(), ch.pos().z(), ch.strawId().asUint16()});
     }
 
     for (auto& [sp, hits] : particleHits) {
