@@ -143,10 +143,12 @@ namespace mu2e{
                 << " nHits=" << hits.size()
                 << " [dt(ns) / dz(mm) / dx^2+dy^2(mm^2)]:";
       for (size_t i = 1; i < hits.size(); ++i) {
+        std::cout<<"i = "<<i<<" sid = "<<hits[i].sid<<std::endl;
         float dx = hits[i].x - hits[i-1].x, dy = hits[i].y - hits[i-1].y;
-        std::cout << " " << (hits[i].t - hits[i-1].t)
-                  << "/" << (hits[i].z - hits[i-1].z)
-                  << "/" << (dx*dx + dy*dy);
+        std::cout << "  " << (hits[i].t - hits[i-1].t)
+                  << "  " << (hits[i].z - hits[i-1].z)
+                  << "  " << (dx*dx + dy*dy);
+        std::cout<<"\n";
       }
       std::cout << "\n";
     }
