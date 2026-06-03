@@ -113,7 +113,9 @@ namespace mu2e
       float _ccomqual = 0;
       float _cecc = 0;
       float _rmsctime = 0;
+      float _rmscz = 0;
       float _avecedep = 0;
+      float _avgedep = 0;
       float _mindt = 0;
       float _mindrho = 0;
       bool _isinit = false;
@@ -194,7 +196,9 @@ namespace mu2e
     _bcdiag->Branch("ctime",&_ctime,"ctime/F");
     _bcdiag->Branch("cedep",&_cedep,"cedep/F");
     _bcdiag->Branch("rmsctime",&_rmsctime,"rmsctime/F");
+    _bcdiag->Branch("rmscz",&_rmscz,"rmscz/F");
     _bcdiag->Branch("avecedep",&_avecedep,"avecedep/F");
+    _bcdiag->Branch("avgedep",&_avgedep,"avgedep/F");
     _bcdiag->Branch("isinit",&_isinit,"isinit/B");
     _bcdiag->Branch("isbkg",&_isbkg,"isbkg/B");
     _bcdiag->Branch("isref",&_isref,"isref/B");
@@ -362,8 +366,8 @@ namespace mu2e
       _bkghinfo.reserve(cluster.hits().size());
       _nch = cluster.hits().size();
       _nsh = _nsth = _nactive = _nsha = _nbkg = _nrel = 0;
-      float sumEdep(0.), sumEcc(0.);
-      float sqrSumDeltaTime(0.), sqrSumDeltaX(0.), sqrSumDeltaY(0.), sqrSumDeltaPhi(0.), sqrSumQual(0.);
+      float sumEdep(0.), sumEdepRaw(0.), sumEcc(0.);
+      float sqrSumDeltaTime(0.), sqrSumDeltaX(0.), sqrSumDeltaY(0.), sqrSumDeltaZ(0.), sqrSumDeltaPhi(0.), sqrSumQual(0.);
       float sumPitch(0.), sumYaw(0.), sumwPitch(0.), sumwYaw(0.), sumwEcc(0.);
       float phihit(0.), phiclust(0.), phidiff(0.);
       float phimin = std::numeric_limits<float>::max();
@@ -378,9 +382,11 @@ namespace mu2e
         hz.push_back(ch.pos().Z());
         hp[ch.strawId().plane()] = true;
         BkgClusterHit const& bhit = _bkghitcol->at(ich);
-        sumEdep +=  ch.energyDep()/ch.nStrawHits();
+        sumEdep    += ch.energyDep()/ch.nStrawHits();
+        sumEdepRaw += ch.energyDep();
         sqrSumDeltaX += std::pow(ch.pos().X() - _cpos.X(),2);
         sqrSumDeltaY += std::pow(ch.pos().Y() - _cpos.Y(),2);
+        sqrSumDeltaZ += std::pow(ch.pos().Z() - _cpos.Z(),2);
         phihit = ch.pos().phi();
         phidiff = phihit- phiclust;
         if(phidiff > M_PI) phidiff -= 2*M_PI;
@@ -469,12 +475,14 @@ namespace mu2e
         _bkghinfo.push_back(bkghinfo);
       }
       _avecedep = sumEdep/_nch;
+      _avgedep  = sumEdepRaw/_nch;
       _cecc = sumEcc/sumwEcc;
       _rmscposx = std::sqrt(sqrSumDeltaX/_nch);
       _rmscposy = std::sqrt(sqrSumDeltaY/_nch);
       _rmscrho = std::sqrt((sqrSumDeltaX+sqrSumDeltaY)/_nch);
       _rmscphi = std::sqrt(sqrSumDeltaPhi/_nch);
       _rmsctime = std::sqrt(sqrSumDeltaTime/_nch);
+      _rmscz    = std::sqrt(sqrSumDeltaZ/_nch);
       float areaXY = M_PI*_rmscposx*_rmscposy;
       if(areaXY > 0)
         _clusterdensity = static_cast<float>(_nch)/areaXY;
