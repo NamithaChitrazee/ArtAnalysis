@@ -132,6 +132,7 @@ namespace mu2e
       float _zdiff;
       float _phidiff;
       float _pfrac;
+      float _slopeYZ = 0;
       float _kQ;
       int _np, _fp, _lp, _pgap;
 
@@ -222,6 +223,7 @@ namespace mu2e
     _bcdiag->Branch("zmax",&_zmax,"zmax/F");
     _bcdiag->Branch("zgap",&_zgap,"zgap/F");
     _bcdiag->Branch("zdiff",&_zdiff,"zdiff/F");
+    _bcdiag->Branch("slopeYZ",&_slopeYZ,"slopeYZ/F");
     _bcdiag->Branch("phidiff",&_phidiff,"phidiff/F");
     _bcdiag->Branch("np",&_np,"np/I");
     _bcdiag->Branch("pfrac",&_pfrac,"pfrac/F");
@@ -376,10 +378,17 @@ namespace mu2e
       std::vector<int> panelIds;
       std::vector<float> hz;
       std::array<bool,StrawId::_nplanes> hp{false};
+      float sumZfit(0.f), sumYfit(0.f), sumZYfit(0.f), sumZ2fit(0.f);
       phiclust = _cpos.phi();
       for(auto const& ich : cluster.hits()){
         ComboHit const& ch = _chcol->at(ich);
         hz.push_back(ch.pos().Z());
+        float hZ = ch.pos().Z();
+        float hY = ch.pos().Y();
+        sumZfit  += hZ;
+        sumYfit  += hY;
+        sumZYfit += hZ * hY;
+        sumZ2fit += hZ * hZ;
         hp[ch.strawId().plane()] = true;
         BkgClusterHit const& bhit = _bkghitcol->at(ich);
         sumEdep    += ch.energyDep()/ch.nStrawHits();
@@ -522,7 +531,13 @@ namespace mu2e
           lp = ip;
         }
       }
-      _pfrac = (_lp != _fp) ? static_cast<float>(_np)/static_cast<float>(_lp - _fp) : 1.0f; 
+      _pfrac = (_lp != _fp) ? static_cast<float>(_np)/static_cast<float>(_lp - _fp) : 1.0f;
+      {
+        float denom = static_cast<float>(_nch) * sumZ2fit - sumZfit * sumZfit;
+        _slopeYZ = (std::abs(denom) > 1e-6f)
+          ? (static_cast<float>(_nch) * sumZYfit - sumZfit * sumYfit) / denom
+          : 0.f;
+      }
       _bcdiag->Fill();
       ++_cluIdx;
     }
