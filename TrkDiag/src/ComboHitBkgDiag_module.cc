@@ -131,25 +131,28 @@ namespace mu2e{
       art::Ptr<SimParticle> const& sp = sgsp->simParticle();
       if (!sp.isNonnull()) continue;
       if (BkgMCMatch::isCE(sp->creationCode())) continue; // skip CE (creationCode 167)
-      particleHits[sp].push_back({ch.correctedTime(), ch.pos().x(), ch.pos().y(), ch.pos().z(), ch.strawId()});
+        particleHits[sp].push_back({ch.correctedTime(), ch.pos().x(), ch.pos().y(), ch.pos().z(), ch.strawId()});
     }
 
     for (auto& [sp, hits] : particleHits) {
       if (hits.size() < 2) continue;
       std::sort(hits.begin(), hits.end(), [](const HitPos& a, const HitPos& b){ return a.z > b.z; });
-      std::cout << "Event " << _iev
+      if(sp->pdgId() == 2212)
+        std::cout << "Event " << _iev
                 << " SimParticle pdg=" << sp->pdgId()
                 << " creationCode=" << static_cast<int>(sp->creationCode())
-                << " nHits=" << hits.size()
-                << " [dt(ns) / dz(mm) / dx^2+dy^2(mm^2)]:";
+                << " nHits=" << hits.size();
+      //<< " [dt(ns) / dz(mm) / dx^2+dy^2(mm^2)]:";
       for (size_t i = 1; i < hits.size(); ++i) {
+        std::cout<<"\n";
         std::cout<<"i = "<<i<<" sid = "<<hits[i].sid.plane()<<"_"<<hits[i].sid.panel()<<"_"<<hits[i].sid.straw()<<std::endl;
-        float dx = hits[i].x - hits[i-1].x, dy = hits[i].y - hits[i-1].y;
+        std::cout<<"i = "<<i<<" pos x = "<<hits[i].x<<" y = "<<hits[i].y<<" z = "<<hits[i].z<<std::endl;
+        /*float dx = hits[i].x - hits[i-1].x, dy = hits[i].y - hits[i-1].y;
         std::cout << "  " << (hits[i].t - hits[i-1].t)
                   << "  " << (hits[i].z - hits[i-1].z)
-                  << "  " << (dx*dx + dy*dy);
+                  << "  " << (dx*dx + dy*dy);*/
         std::cout<<"\n";
-      }
+        }
       std::cout << "\n";
     }
   }
