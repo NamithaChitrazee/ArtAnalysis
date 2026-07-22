@@ -1,7 +1,7 @@
-//Code generated automatically by TMVA for Inference of Model file [TrackPID.onnx] at [Fri Sep 26 15:44:22 2025] 
+//Code generated automatically by TMVA for Inference of Model file [TrackPID_v1.onnx] at [Wed Jul 22 20:07:11 2026] 
 
-#ifndef ROOT_TMVA_SOFIE_TRACKPID
-#define ROOT_TMVA_SOFIE_TRACKPID
+#ifndef ROOT_TMVA_SOFIE_TRACKPID_V1
+#define ROOT_TMVA_SOFIE_TRACKPID_V1
 
 #include <algorithm>
 #include <cmath>
@@ -9,7 +9,7 @@
 #include "TMVA/SOFIE_common.hxx"
 #include <fstream>
 
-namespace TMVA_SOFIE_TrackPID{
+namespace TMVA_SOFIE_TrackPID_v1{
 namespace BLAS{
 	extern "C" void sgemv_(const char * trans, const int * m, const int * n, const float * alpha, const float * A,
 	                       const int * lda, const float * X, const int * incx, const float * beta, const float * Y, const int * incy);
@@ -62,7 +62,7 @@ std::vector<float> fTensor_sequential1dense1BiasAddReadVariableOp0bcast = std::v
 float * tensor_sequential1dense1BiasAddReadVariableOp0bcast = fTensor_sequential1dense1BiasAddReadVariableOp0bcast.data();
 
 
-Session(std::string filename ="TrackPID.dat") {
+Session(std::string filename ="TrackPID_v1.dat") {
 
 //--- reading weights from file
    std::ifstream f;
@@ -189,7 +189,7 @@ Session(std::string filename ="TrackPID.dat") {
    }
 }
 
-std::vector<float> infer(float* tensor_inputlayer){
+std::vector<float> infer(float* tensor_kerastensor){
 
 //--------- Gemm
    char op_0_transA = 'n';
@@ -202,7 +202,7 @@ std::vector<float> infer(float* tensor_inputlayer){
    int op_0_lda = 4;
    int op_0_ldb = 5;
    std::copy(tensor_sequential1dense1BiasAddReadVariableOp0bcast, tensor_sequential1dense1BiasAddReadVariableOp0bcast + 160, tensor_sequential1dense1MatMulGemm70);
-   BLAS::sgemm_(&op_0_transB, &op_0_transA, &op_0_n, &op_0_m, &op_0_k, &op_0_alpha, tensor_sequential1dense1CastReadVariableOp0, &op_0_ldb, tensor_inputlayer, &op_0_lda, &op_0_beta, tensor_sequential1dense1MatMulGemm70, &op_0_n);
+   BLAS::sgemm_(&op_0_transB, &op_0_transA, &op_0_n, &op_0_m, &op_0_k, &op_0_alpha, tensor_sequential1dense1CastReadVariableOp0, &op_0_ldb, tensor_kerastensor, &op_0_lda, &op_0_beta, tensor_sequential1dense1MatMulGemm70, &op_0_n);
 
 //------ RELU
    for (int id = 0; id < 160 ; id++){
@@ -263,6 +263,6 @@ std::vector<float> infer(float* tensor_inputlayer){
    return fTensor_output;
 }
 };
-} //TMVA_SOFIE_TrackPID
+} //TMVA_SOFIE_TrackPID_v1
 
-#endif  // ROOT_TMVA_SOFIE_TRACKPID
+#endif  // ROOT_TMVA_SOFIE_TRACKPID_V1
