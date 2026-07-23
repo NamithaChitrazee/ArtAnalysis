@@ -59,7 +59,7 @@ namespace mu2e {
 
         fhicl::Atom<float>                   maxDE       { Name("MaxDE")       , Comment("Maximum E(calo) - P(trk)")};
         fhicl::Sequence<std::string>         kalSeeds    { Name("KalSeeds")    , Comment("KalSeed (Ptr) collection names") };
-        fhicl::OptionalSequence<std::string> kalSeedDtDts{ Name("KalSeeds")    , Comment("KalSeed (Ptr) collection names") };
+        fhicl::OptionalSequence<std::string> kalSeedDtDts{ Name("KalSeedDtDts"), Comment("KalSeedDtDt collection names") };
         fhicl::Atom<std::string>             datFilename { Name("DatFilename") , Comment("Filename for the .dat file to use")};
         fhicl::Atom<int>                     MVAVersion  { Name("MVAVersion")  , Comment("MVA version ID to determine the input features")};
         fhicl::Atom<bool>                    printMVA    { Name("PrintMVA")    , Comment("Print the MVA used"), false};
@@ -168,7 +168,7 @@ namespace mu2e {
     }
 
     if(debugLevel_ > 0) {
-      printf("[TrackPID::%s] Input features: {%.3f, %.3f, %.3f, %.3f} output: %.5f", __func__,
+      printf("[TrackPID::%s] Input features: {%.3f, %.3f, %.3f, %.3f} output: %.5f\n", __func__,
              features[0], features[1], features[2], features[3], score);
     }
 
@@ -213,7 +213,7 @@ namespace mu2e {
     const auto mvaout = mva_v1_->infer(features.data());
     score = mvaout[0];
     if(debugLevel_ > 0) {
-      printf("[TrackPID::%s] Input features: {%.3f, %.3f, %.3f, %.3f} output: %.5f", __func__,
+      printf("[TrackPID::%s] Input features: {%.3f, %.3f, %.3f, %.3f} output: %.5f\n", __func__,
              features[0], features[1], features[2], features[3], score);
     }
 
