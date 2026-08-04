@@ -107,7 +107,7 @@ namespace mu2e {
     if(conf().kalSeedDtDts(kalSeedDtDts_)) {
       if(kalSeeds_.size() != kalSeedDtDts_.size()) throw cet::exception("RECO") << "KalSeed and KalSeedDtDt lists must match";
     } else if(MVAVersion_ == 1) {
-      throw cet::exception("RECO") << "KalSeedDtDt is not provided but is required for MVA feature version 2";
+      throw cet::exception("RECO") << "KalSeedDtDt is not provided but is required for MVA feature version 1";
     }
 
     // Produce a PID collection per track collection
