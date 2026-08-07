@@ -66,9 +66,12 @@ CHD : {
 # track PID module
 TrkPID : {
   module_type : TrackPID
-  MaxDE : 5.0 # MeV
-  DeltaTOffset : -1.15 # specific to MDC2018h
-  MVAConfig : { MVAWeights : "ArtAnalysis/TrkDiag/data/TrkCaloHitPID.weights.xml"}
+  MaxDE        : 500.0 # MeV
+  KalSeeds     : [ "KKDe"       , "KKUe"        , "KKDmu"        , "KKUmu"        , "MergeKKAll"        ]
+  KalSeedDtDts : ["TrkDtDt:KKDe", "TrkDtDt:KKUe", "TrkDtDt:KKDmu", "TrkDtDt:KKUmu", "TrkDtDt:MergeKKAll"]
+  MVAVersion   : 1
+  DatFilename  : "ArtAnalysis/TrkDiag/data/TrackPID_v1.dat"
+  DebugLevel   : 0
 }
 # this module only makes sense for downstream electron fits
 TrkPIDDeM          : @local::TrkPID
