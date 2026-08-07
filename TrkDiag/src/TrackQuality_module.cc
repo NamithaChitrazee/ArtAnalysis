@@ -49,7 +49,7 @@ namespace mu2e
         fhicl::Atom<art::InputTag> kalSeedPtrTag{Name("KalSeedPtrCollection"), Comment("Input tag for KalSeedPtrCollection")};
         fhicl::Atom<bool> printMVA{Name("PrintMVA"), Comment("Print the MVA used"), false};
         fhicl::Atom<std::string> onnxFilename{Name("onnxFilename"), Comment("Filename for the .onnx file to use")};
-        fhicl::Atom<std::string> xgbFileName{Name("xgbFilename"), Comment("Path to XGBoost .ubj model file")};
+        fhicl::Atom<std::string> xgbFilename{Name("xgbFilename"), Comment("Path to XGBoost .ubj model file")};
         fhicl::Atom<int> debug{Name("debugLevel"), Comment("Debug printout level"), 0};
       };
 
@@ -125,7 +125,7 @@ namespace mu2e
         throw cet::exception("TrackQuality") << "XGBoosterCreate failed: " << XGBGetLastError();
       }
 
-      std::string modelPath = _configFileLookup(conf().xgbFileName().c_str());
+      std::string modelPath = _configFileLookup(conf().xgbFilename().c_str());
       if (XGBoosterLoadModel(_booster, modelPath.c_str()) != 0) {
         throw cet::exception("TrackQuality") << "XGBoosterLoadModel failed: " << XGBGetLastError();
       }
