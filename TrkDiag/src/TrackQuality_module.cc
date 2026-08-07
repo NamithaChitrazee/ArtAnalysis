@@ -265,6 +265,11 @@ namespace mu2e
         throw std::runtime_error(std::string("XGDMatrixFree failed: ") + XGBGetLastError());
       }
 
+      if (!entrance_found) {
+        bdt_score = 0; // this is not a good track
+      }
+
+
 
       if(_debug > 0) {
         printf("[TrackQuality::%s::%s] Inputs = %.0f, %.4f, %.4f, %.4f, %.4f, %.4f %.4f --> ANN output = %.4fm BDT output = %.4fm\n",
