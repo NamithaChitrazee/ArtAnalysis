@@ -138,6 +138,15 @@ cet_build_plugin(TrackPID art::module
       Offline::RecoDataProducts
 )
 
+cet_build_plugin(TrackOnlyPID art::module
+    REG_SOURCE src/TrackOnlyPID_module.cc
+    LIBRARIES REG
+      ArtAnalysis::TrkDiag
+
+      Offline::Mu2eUtilities
+      Offline::RecoDataProducts
+)
+
 cet_build_plugin(TrackQuality art::module
     REG_SOURCE src/TrackQuality_module.cc
     LIBRARIES REG
