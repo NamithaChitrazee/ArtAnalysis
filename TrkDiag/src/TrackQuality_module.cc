@@ -125,7 +125,7 @@ namespace mu2e
         throw cet::exception("TrackQuality") << "XGBoosterCreate failed: " << XGBGetLastError();
       }
 
-      std::string modelPath = ConfigFileLookupPolicy()(conf().xgbFileName());
+      std::string modelPath = _configFileLookup(conf().xgbFileName().c_str());
       if (XGBoosterLoadModel(_booster, modelPath.c_str()) != 0) {
         throw cet::exception("TrackQuality") << "XGBoosterLoadModel failed: " << XGBGetLastError();
       }
