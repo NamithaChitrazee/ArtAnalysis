@@ -148,7 +148,7 @@ namespace mu2e {
     auto trkmom = momentumAtCalo(seed);
     features[0] = cc->energyDep() - sqrt(trkmom.Mag2());
     // move into detector coordinates.  Yikes!!
-    XYZVectorF cpos = XYZVectorF(calo_->geomUtil().mu2eToTracker(calo_->geomUtil().diskFFToMu2e( cc->diskID(), cc->cog3Vector())));
+    XYZVectorF cpos = XYZVectorF(calo_->mu2eToTracker(calo_->diskFFToMu2e( cc->diskID(), cc->cog3Vector())));
     features[1] = sqrt(cpos.Perp2());
     // compute transverse direction WRT position
     cpos.SetZ(0.0);
