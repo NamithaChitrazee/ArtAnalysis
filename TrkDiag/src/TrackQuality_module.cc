@@ -55,6 +55,7 @@ namespace mu2e
 
       using Parameters = art::EDProducer::Table<Config>;
       TrackQuality(const Parameters& conf);
+      ~TrackQuality();
 
     private:
       void produce(art::Event& event) override;
@@ -140,6 +141,8 @@ namespace mu2e
       }
 
     }
+
+  TrackQuality::~TrackQuality() { if (_booster) XGBoosterFree(_booster); }
 
   void TrackQuality::produce(art::Event& event ) {
     // create output
