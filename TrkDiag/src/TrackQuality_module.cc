@@ -121,18 +121,18 @@ namespace mu2e
 
       // Load XGBoost model
       if (XGBoosterCreate(nullptr, 0, &_booster) != 0) {
-        throw std::runtime_error(std::string("XGBoosterCreate failed: ") + XGBGetLastError());
+        throw cet::exception("TrackQuality") << "XGBoosterCreate failed: " << XGBGetLastError();
       }
 
       std::string modelPath = ConfigFileLookupPolicy()(conf().xgbFileName());
       if (XGBoosterLoadModel(_booster, modelPath.c_str()) != 0) {
-        throw std::runtime_error(std::string("XGBoosterLoadModel failed: ") + XGBGetLastError());
+        throw cet::exception("TrackQuality") << "XGBoosterLoadModel failed: " << XGBGetLastError();
       }
 
       // verify the loaded model matches the expected feature count
       bst_ulong nFeaturesModel = 0;
       if (XGBoosterGetNumFeature(_booster, &nFeaturesModel) != 0) {
-        throw std::runtime_error(std::string("XGBoosterGetNumFeature failed: ") + XGBGetLastError());
+        throw cet::exception("TrackQuality") << "XGBoosterGetNumFeature failed: " << XGBGetLastError();
       }
       if (nFeaturesModel != _nFeatures) {
         throw cet::exception("TrackQuality") << "XGBoost model expects " << nFeaturesModel
@@ -246,23 +246,23 @@ namespace mu2e
       float bdt_score = 0.0f;
       DMatrixHandle dmat;
       if (XGDMatrixCreateFromMat(features.data(), 1, _nFeatures, NAN, &dmat) != 0) { // use same features vector
-        throw std::runtime_error(std::string("XGDMatrixCreateFromMat failed: ") + XGBGetLastError());
+        throw cet::exception("TrackQuality") << "XGDMatrixCreateFromMat failed: " << XGBGetLastError();
       }
 
       bst_ulong out_len = 0;
       const float* out_result = nullptr;
       if (XGBoosterPredict(_booster, dmat, 0, 0, 0, &out_len, &out_result) != 0) {
         XGDMatrixFree(dmat);
-        throw std::runtime_error(std::string("XGBoosterPredict failed: ") + XGBGetLastError());
+        throw cet::exception("TrackQuality") << "XGBoosterPredict failed: " << XGBGetLastError();
       }
       if (out_len < 1 || out_result == nullptr) {
         XGDMatrixFree(dmat);
-        throw std::runtime_error("XGBoosterPredict returned no result");
+        throw cet::exception("TrackQuality") << "XGBoosterPredict returned no result";
       }
 
       bdt_score = out_result[0];
       if (XGDMatrixFree(dmat) != 0) {
-        throw std::runtime_error(std::string("XGDMatrixFree failed: ") + XGBGetLastError());
+        throw cet::exception("TrackQuality") << "XGDMatrixFree failed: " << XGBGetLastError();
       }
 
       if (!entrance_found) {
