@@ -285,7 +285,10 @@ namespace mu2e
     }
 
     if ( (anncol->size() != kalSeedPtrs.size()) ) {
-      throw cet::exception("TrackQuality") << "KalSeedPtr and MVAResult sizes are inconsistent (" << kalSeedPtrs.size() << ", " << anncol->size();
+      throw cet::exception("TrackQuality") << "KalSeedPtr and MVAResult (ANN) sizes are inconsistent (" << kalSeedPtrs.size() << ", " << anncol->size();
+    }
+    if ( (bdtcol->size() != kalSeedPtrs.size()) ) {
+      throw cet::exception("TrackQuality") << "KalSeedPtr and MVAResult (BDT) sizes are inconsistent (" << kalSeedPtrs.size() << ", " << bdtcol->size();
     }
 
 
