@@ -1,6 +1,7 @@
 //
 // Create a TrkQual object
-// using TMVA::SOFIE
+// - uses ONNXRuntime for the ANN model
+// - uses XGBoost for the BDT model
 //
 // Original author A. Edmonds
 //
@@ -47,7 +48,6 @@ namespace mu2e
         using Comment=fhicl::Comment;
 
         fhicl::Atom<art::InputTag> kalSeedPtrTag{Name("KalSeedPtrCollection"), Comment("Input tag for KalSeedPtrCollection")};
-        fhicl::Atom<bool> printMVA{Name("PrintMVA"), Comment("Print the MVA used"), false};
         fhicl::Atom<std::string> onnxFilename{Name("onnxFilename"), Comment("Filename for the .onnx file to use")};
         fhicl::Atom<std::string> xgbFilename{Name("xgbFilename"), Comment("Path to XGBoost .ubj model file")};
         fhicl::Atom<int> debug{Name("debugLevel"), Comment("Debug printout level"), 0};
@@ -59,10 +59,8 @@ namespace mu2e
 
     private:
       void produce(art::Event& event) override;
-      void initializeMVA(std::string xmlfilename);
 
       art::InputTag _kalSeedPtrTag;
-      bool _printMVA;
       int _debug;
 
     ConfigFileLookupPolicy _configFileLookup;
@@ -89,7 +87,6 @@ namespace mu2e
   TrackQuality::TrackQuality(const Parameters& conf) :
     art::EDProducer{conf},
     _kalSeedPtrTag(conf().kalSeedPtrTag()),
-    _printMVA(conf().printMVA()),
     _debug(conf().debug()),
     // Note that the following is required to be in order
     _env(ORT_LOGGING_LEVEL_WARNING, "ONNXInference"),
