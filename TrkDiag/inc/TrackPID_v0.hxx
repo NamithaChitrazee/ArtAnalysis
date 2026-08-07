@@ -1,7 +1,7 @@
 //Code generated automatically by TMVA for Inference of Model file [TrackPID.onnx] at [Fri Sep 26 15:44:22 2025] 
 
-#ifndef ROOT_TMVA_SOFIE_TRACKPID
-#define ROOT_TMVA_SOFIE_TRACKPID
+#ifndef ROOT_TMVA_SOFIE_TRACKPID_V0
+#define ROOT_TMVA_SOFIE_TRACKPID_V0
 
 #include <algorithm>
 #include <cmath>
@@ -9,7 +9,7 @@
 #include "TMVA/SOFIE_common.hxx"
 #include <fstream>
 
-namespace TMVA_SOFIE_TrackPID{
+namespace TMVA_SOFIE_TrackPID_v0{
 namespace BLAS{
 	extern "C" void sgemv_(const char * trans, const int * m, const int * n, const float * alpha, const float * A,
 	                       const int * lda, const float * X, const int * incx, const float * beta, const float * Y, const int * incy);
@@ -62,7 +62,7 @@ std::vector<float> fTensor_sequential1dense1BiasAddReadVariableOp0bcast = std::v
 float * tensor_sequential1dense1BiasAddReadVariableOp0bcast = fTensor_sequential1dense1BiasAddReadVariableOp0bcast.data();
 
 
-Session(std::string filename ="TrackPID.dat") {
+Session(std::string filename ="TrackPID_v0.dat") {
 
 //--- reading weights from file
    std::ifstream f;
@@ -263,6 +263,6 @@ std::vector<float> infer(float* tensor_inputlayer){
    return fTensor_output;
 }
 };
-} //TMVA_SOFIE_TrackPID
+} //TMVA_SOFIE_TrackPID_V0
 
-#endif  // ROOT_TMVA_SOFIE_TRACKPID
+#endif  // ROOT_TMVA_SOFIE_TRACKPID_V0
