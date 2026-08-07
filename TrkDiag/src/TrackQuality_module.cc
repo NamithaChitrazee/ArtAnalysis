@@ -275,7 +275,7 @@ namespace mu2e
 
 
       if(_debug > 0) {
-        printf("[TrackQuality::%s::%s] Inputs = %.0f, %.4f, %.4f, %.4f, %.4f, %.4f %.4f --> ANN output = %.4fm BDT output = %.4fm\n",
+        printf("[TrackQuality::%s::%s] Inputs = %.0f, %.4f, %.4f, %.4f, %.4f, %.4f %.4f --> ANN output = %.4f, BDT output = %.4f\n",
                __func__, moduleDescription().moduleLabel().c_str(),
                features[0], features[1], features[2], features[3], features[4], features[5], features[6], annout[0], bdt_score);
       }
