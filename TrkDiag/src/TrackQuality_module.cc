@@ -113,6 +113,11 @@ namespace mu2e
       for (auto dim : _input_shape) {
         _total_size *= dim;
       }
+      if (_total_size != _nFeatures) {
+        throw cet::exception("TrackQuality") << "ANN model expects " << _total_size
+                                             << " features but the module supplies " << _nFeatures;
+      }
+
 
       // Load XGBoost model
       if (XGBoosterCreate(nullptr, 0, &_booster) != 0) {
@@ -128,6 +133,10 @@ namespace mu2e
       bst_ulong nFeaturesModel = 0;
       if (XGBoosterGetNumFeature(_booster, &nFeaturesModel) != 0) {
         throw std::runtime_error(std::string("XGBoosterGetNumFeature failed: ") + XGBGetLastError());
+      }
+      if (nFeaturesModel != _nFeatures) {
+        throw cet::exception("TrackQuality") << "XGBoost model expects " << nFeaturesModel
+                                             << " features but the module supplies " << _nFeatures;
       }
 
     }
