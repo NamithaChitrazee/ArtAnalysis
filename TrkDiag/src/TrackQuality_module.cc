@@ -11,11 +11,8 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Core/EDProducer.h"
-#include "art_root_io/TFileService.h"
-#include "art/Utilities/make_tool.h"
 // utilities
 #include "Offline/ProditionsService/inc/ProditionsHandle.hh"
-#include "Offline/Mu2eUtilities/inc/MVATools.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
 #include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 #include "Offline/ConfigTools/inc/ConfigFileLookupPolicy.hh"
@@ -122,7 +119,7 @@ namespace mu2e
         throw cet::exception("TrackQuality") << "XGBoosterCreate failed: " << XGBGetLastError();
       }
 
-      std::string modelPath = _configFileLookup(conf().xgbFilename().c_str());
+      std::string modelPath = _configFileLookup(conf().xgbFilename());
       if (XGBoosterLoadModel(_booster, modelPath.c_str()) != 0) {
         throw cet::exception("TrackQuality") << "XGBoosterLoadModel failed: " << XGBGetLastError();
       }
